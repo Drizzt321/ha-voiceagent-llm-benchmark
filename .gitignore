@@ -12,6 +12,7 @@ logs/*
 .vscode/
 .idea/
 .DS_Store
+HANDOFF.md
 
 # Directory contents excluded (may contain sensitive data).
 # The directories themselves are tracked via .gitkeep.
