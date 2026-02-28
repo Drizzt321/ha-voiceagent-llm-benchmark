@@ -12,6 +12,7 @@ logs/*
 .vscode/
 .idea/
 .DS_Store
+*.lock
 uv.lock
 HANDOFF.md
 
