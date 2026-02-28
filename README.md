@@ -56,6 +56,13 @@ sample_test_data/
 ├── sample_inventory.yaml    # 2-entity fixture for unit tests
 └── sample_test_cases.ndjson # 5-case fixture for unit tests
 
+tests/
+├── conftest.py              # Shared fixtures (sample data paths)
+├── test_dataset.py          # Dataset loader tests
+├── test_tools.py            # Tool definition tests
+├── test_prompt.py           # Prompt assembly tests
+└── test_scorers.py          # Tier 1 scorer tests
+
 docs/                        # Architecture, specs, implementation plan
 logs/                        # Inspect eval logs (gitignored)
 configs/                     # Per-host server configs
@@ -76,6 +83,7 @@ configs/                     # Per-host server configs
 | [`docs/test-data-format.md`](docs/test-data-format.md) | NDJSON and YAML schemas |
 | [`docs/scoring-design.md`](docs/scoring-design.md) | Multi-dimensional scoring explained |
 | [`docs/implementation-plan-m1.md`](docs/implementation-plan-m1.md) | M1 step-by-step implementation plan |
+| [`docs/gotchas_learnings.md`](docs/gotchas_learnings.md) | Inspect AI gotchas and implementation learnings |
 
 ## License
 
