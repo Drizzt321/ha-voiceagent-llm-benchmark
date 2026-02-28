@@ -190,3 +190,76 @@ Never share a single dummy handler across multiple `ToolDef` objects. Each `Tool
 receive its own function instance, even if the implementations are identical.
 
 ---
+
+## 5. `task.py` must use absolute imports and anchor paths to `__file__`
+
+**Affected file:** `src/ha_voice_bench/task.py`
+
+### Relative imports break
+
+When `inspect eval src/ha_voice_bench/task.py` is run, Inspect loads the file by path using
+`importlib`, not as part of the `ha_voice_bench` package. Relative imports (`from .dataset
+import ...`) fail with `ModuleNotFoundError` because the module has no package context.
+
+**Fix:** use absolute imports (`from ha_voice_bench.dataset import ...`). The package is
+installed in editable mode so absolute imports work fine.
+
+### CWD is changed to the task file's directory
+
+Inspect changes the working directory to `src/ha_voice_bench/` when loading the task module.
+Any path resolved relative to CWD (e.g. `Path(".") / "sample_test_data/..."`) will fail
+because that path doesn't exist under `src/ha_voice_bench/`.
+
+**Fix:** anchor all relative paths to the repo root via `__file__`:
+
+```python
+_REPO_ROOT = Path(__file__).resolve().parents[2]  # src/ha_voice_bench/task.py → repo root
+
+def _resolve(base_dir: str, rel_path: str) -> Path:
+    base = Path(base_dir) if Path(base_dir).is_absolute() else _REPO_ROOT / base_dir
+    return base / rel_path
+```
+
+This is stable regardless of CWD at invocation time.
+
+---
+
+## 6. `Score.value` must be a scalar for `accuracy()` to aggregate correctly
+
+**Affected file:** `src/ha_voice_bench/scorers/tool_call.py`
+
+`accuracy()` expects `Score.value` to be a `"C"`/`"I"`/`"N"` string or a `0`/`1` float.
+Returning a dict (e.g. `{"tool_name": "C", "args": "I", ...}`) causes a silent float-conversion
+failure: the `accuracy` summary line shows `0.000` regardless of actual results, and a
+`WARNING Unable to convert value to float` is emitted for every sample.
+
+The per-dimension breakdown is not lost — it belongs in `Score.explanation`, where the Inspect
+viewer shows it per-sample. `Score.value` should carry only the scalar overall verdict:
+
+```python
+return Score(
+    value=overall,          # "C" or "I" — used by accuracy() for aggregation
+    explanation=explanation, # per-dimension breakdown shown in inspect view
+    ...
+)
+```
+
+---
+
+## 7. `--display=conversation` collapses newlines in the terminal
+
+The `inspect eval --display=conversation` output renders message content in fixed-width boxes.
+Multi-line content (e.g. the YAML-formatted entity inventory) is displayed as a single wrapped
+line. The actual prompt sent to the model retains all newlines and indentation — this is purely
+a terminal rendering artefact.
+
+To inspect the real prompt content, read the `.eval` log file (it's a zip archive):
+
+```python
+import zipfile, json
+with zipfile.ZipFile("logs/my-run.eval") as z:
+    sample = json.loads(z.read("samples/<sample-id>.json"))
+print(list(sample["attachments"].values())[0])  # system prompt
+```
+
+---

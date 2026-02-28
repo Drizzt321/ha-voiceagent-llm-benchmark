@@ -84,10 +84,15 @@ uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=
 
 **What to check in the trace output:**
 - System message contains entity inventory text
-- Tools array lists all 11 HA intent tools
+- Tools array lists all 11 HA intent tools (distinct names, not 11 copies of one tool)
 - Model response contains `tool_calls` (not plain text only)
-- Scorer output shows C/I/N values for each dimension
+- `accuracy` summary shows a real number, no `WARNING Unable to convert value to float`
 - `usage` shows non-zero `prompt_tokens` and `completion_tokens`
+
+> **Display note:** `--display=conversation` renders message content in fixed-width terminal
+> boxes. The YAML entity inventory will appear as one wrapped line — the actual prompt sent to
+> the model has full newlines and indentation. To inspect the real prompt, read the `.eval` log
+> (see `docs/gotchas_learnings.md` §7).
 
 ---
 
