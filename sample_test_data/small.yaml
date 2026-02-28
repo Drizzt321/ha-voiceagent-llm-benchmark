@@ -1,0 +1,126 @@
+# Small Inventory — 10 entities, 6 areas
+# Used for MVP testing and fast iteration.
+# Designed to support all 10 seed test cases in small_test_cases.ndjson.
+#
+# Entities cover: lights (3), lock (1), cover (1), climate (1),
+#   switch (1), binary_sensor (1), sensor (1), media_player (1)
+
+areas:
+  - id: kitchen
+    name: Kitchen
+
+  - id: living_room
+    name: Living Room
+
+  - id: bedroom
+    name: Bedroom
+
+  - id: garage
+    name: Garage
+
+  - id: hallway
+    name: Hallway
+
+  - id: entry
+    name: Entry
+
+entities:
+  # --- Lights ---
+  - entity_id: light.kitchen_ceiling
+    name: Kitchen Ceiling
+    area: kitchen
+    state: "on"
+    attributes:
+      brightness: 255
+      color_mode: brightness
+      supported_color_modes:
+        - brightness
+
+  - entity_id: light.living_room_lamp
+    name: Living Room Lamp
+    area: living_room
+    state: "off"
+    attributes:
+      brightness:
+      color_mode:
+      supported_color_modes:
+        - brightness
+        - hs
+
+  - entity_id: light.bedroom_overhead
+    name: Bedroom Overhead
+    area: bedroom
+    state: "off"
+    attributes:
+      brightness:
+      color_mode: brightness
+      supported_color_modes:
+        - brightness
+
+  # --- Lock ---
+  - entity_id: lock.front_door
+    name: Front Door Lock
+    area: entry
+    state: locked
+    attributes:
+      device_class: lock
+
+  # --- Cover ---
+  - entity_id: cover.living_room_blinds
+    name: Living Room Blinds
+    area: living_room
+    state: open
+    attributes:
+      current_position: 100
+      device_class: blind
+
+  # --- Climate ---
+  - entity_id: climate.main_thermostat
+    name: Main Thermostat
+    area: hallway
+    state: heat
+    attributes:
+      temperature: 72
+      current_temperature: 71.5
+      hvac_modes:
+        - heat
+        - cool
+        - auto
+        - "off"
+      hvac_action: heating
+
+  # --- Switch ---
+  - entity_id: switch.garage_workbench
+    name: Garage Workbench
+    area: garage
+    state: "off"
+    attributes: {}
+
+  # --- Binary Sensor ---
+  - entity_id: binary_sensor.front_door_contact
+    name: Front Door
+    area: entry
+    state: "off"
+    attributes:
+      device_class: door
+
+  # --- Sensor ---
+  - entity_id: sensor.hallway_temperature
+    name: Hallway Temperature
+    area: hallway
+    state: "71.5"
+    attributes:
+      device_class: temperature
+      unit_of_measurement: "°F"
+
+  # --- Media Player ---
+  - entity_id: media_player.living_room_tv
+    name: Living Room TV
+    area: living_room
+    state: "off"
+    attributes:
+      volume_level: 0.45
+      source_list:
+        - HDMI 1
+        - HDMI 2
+        - Chromecast

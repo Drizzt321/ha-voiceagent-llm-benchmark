@@ -1,0 +1,34 @@
+# Minimal test fixture inventory — 2 entities, 2 areas
+# Used by unit tests only. Kept small for fast test execution.
+# Supports the 4 test cases in sample_test_cases.ndjson.
+
+areas:
+  - id: kitchen
+    name: Kitchen
+
+  - id: hallway
+    name: Hallway
+
+entities:
+  - entity_id: light.kitchen_ceiling
+    name: Kitchen Ceiling
+    area: kitchen
+    state: "on"
+    attributes:
+      brightness: 255
+      color_mode: brightness
+      supported_color_modes:
+        - brightness
+
+  - entity_id: climate.main_thermostat
+    name: Main Thermostat
+    area: hallway
+    state: heat
+    attributes:
+      temperature: 72
+      current_temperature: 71.5
+      hvac_modes:
+        - heat
+        - cool
+        - "off"
+      hvac_action: heating
