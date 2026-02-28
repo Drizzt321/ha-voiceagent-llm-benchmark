@@ -85,6 +85,7 @@ configs/                     # Per-host server configs
 | [`docs/implementation-plan-m1.md`](docs/implementation-plan-m1.md) | M1 step-by-step implementation plan |
 | [`docs/gotchas_learnings.md`](docs/gotchas_learnings.md) | Inspect AI gotchas and implementation learnings |
 | [`docs/user-setup.md`](docs/user-setup.md) | Server setup, env config, and running your first eval |
+| [`docs/failure-patterns.md`](docs/failure-patterns.md) | Taxonomy of model failure modes observed across runs |
 
 ## License
 
