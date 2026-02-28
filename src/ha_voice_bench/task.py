@@ -1,10 +1,10 @@
 """Inspect AI task definition for HA voice benchmarking."""
 
 from inspect_ai import Task, task
-from inspect_ai.scorer import match
 from inspect_ai.solver import use_tools
 
 from .dataset import load_ha_test_cases
+from .scorers.tool_call import tool_call_scorer
 from .solver import ha_voice_solver
 from .tools import get_ha_intent_tools
 
@@ -28,5 +28,5 @@ def ha_voice_benchmark(
             use_tools(*get_ha_intent_tools(tool_tier)),
             ha_voice_solver(base_dir=base_dir),
         ],
-        scorer=match(),  # PLACEHOLDER — replaced in Step 7
+        scorer=tool_call_scorer(),
     )
