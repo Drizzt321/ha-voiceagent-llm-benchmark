@@ -61,7 +61,7 @@ def tool_call_scorer() -> Scorer:
         explanation = _build_explanation(expected_calls, actual_calls, results)
 
         return Score(
-            value={**results, "overall": overall},
+            value=overall,
             answer=json.dumps(_serialize_actual_calls(actual_calls)),
             explanation=explanation,
         )
@@ -255,7 +255,7 @@ def _build_explanation(
 def _error_score(message: str) -> Score:
     """Return an error score when scoring fails."""
     return Score(
-        value={"overall": I, "error": message},
+        value=I,
         answer="",
         explanation=f"Scoring error: {message}",
     )
