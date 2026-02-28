@@ -46,6 +46,14 @@ Example: `small-HassTurnOn-light-kitchen_ceiling-001`
 
 **`expected_tool_calls`** — Array of tool calls the model should make. Empty array `[]` for error/clarification cases. Order doesn't matter (scorer matches order-independently).
 
+**`alternative_expected_tool_calls`** *(optional)* — List of alternative acceptable call sets. Each element is an array of tool calls (same format as `expected_tool_calls`). If the model's response doesn't match the primary `expected_tool_calls` but matches any alternative set, the sample scores C. Use when multiple tool choices are legitimately correct.
+
+```json
+"alternative_expected_tool_calls": [
+  [{"name": "HassGetState", "arguments": {}}]
+]
+```
+
 **`expected_response_type`** — How the model should respond:
 - `action_done` — Model should call tool(s) to perform an action
 - `query_response` — Model should call a query tool (HassGetState, HassClimateGetTemperature, HassGetWeather, HassGetCurrentTime, HassGetCurrentDate)

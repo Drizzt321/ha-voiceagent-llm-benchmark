@@ -10,6 +10,7 @@ from ha_voice_bench.scorers.tool_call import (
     _check_no_hallucinated_tools,
     _check_response_type,
     _check_tool_names,
+    _score_dimensions,
     _tool_call_matches,
 )
 
@@ -169,3 +170,35 @@ class TestToolCallMatches:
         exp = {"name": "HassTurnOn", "arguments": {"domain": ["light", "switch"]}}
         act = {"name": "HassTurnOn", "arguments": {"domain": ["switch", "light"]}}
         assert _tool_call_matches(exp, act)
+
+
+class TestScoreDimensions:
+    def test_all_correct(self):
+        exp = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
+        act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
+        r = _score_dimensions(exp, act, "action_done")
+        assert r["tool_name"] == C
+        assert r["args"] == C
+        assert "overall" not in r  # overall computed by caller, not returned here
+
+    def test_wrong_tool(self):
+        exp = [{"name": "HassClimateGetTemperature", "arguments": {}}]
+        act = [{"name": "HassGetState", "arguments": {}}]
+        r = _score_dimensions(exp, act, "query_response")
+        assert r["tool_name"] == I
+
+    def test_alternative_match(self):
+        """Simulate the alternative matching loop used by the scorer."""
+        primary = [{"name": "HassClimateGetTemperature", "arguments": {}}]
+        alternative = [{"name": "HassGetState", "arguments": {}}]
+        actual = [{"name": "HassGetState", "arguments": {"name": "Hallway Temperature"}}]
+
+        # Primary fails
+        primary_r = _score_dimensions(primary, actual, "query_response")
+        primary_applicable = {k: v for k, v in primary_r.items() if v != N}
+        assert not all(v == C for v in primary_applicable.values())
+
+        # Alternative passes
+        alt_r = _score_dimensions(alternative, actual, "query_response")
+        alt_applicable = {k: v for k, v in alt_r.items() if v != N}
+        assert all(v == C for v in alt_applicable.values())

@@ -82,6 +82,7 @@ an alternate correct answer for temperature queries).
 | Date | Model | Test set | n | Accuracy | F1 cases | F2 cases | Notes |
 |------|-------|----------|---|----------|----------|----------|-------|
 | 2026-02-28 | Qwen2.5-7B-Instruct Q4_K_M | small (25) | 25 | 92% (23/25) | 1 | 1 | First full run |
+| 2026-02-28 | Qwen2.5-7B-Instruct Q4_K_M | small (25) | 25 | 96% (24/25) | 1 | 0 | After adding HassGetState as alternative for temperature query |
 
 ---
 

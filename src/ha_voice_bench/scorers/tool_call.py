@@ -47,18 +47,25 @@ def tool_call_scorer() -> Scorer:
         actual_calls = _extract_tool_calls(state)
         expected_type = state.metadata.get("expected_response_type", "action_done")
 
-        results: dict[str, str] = {}
-        results["response_type"] = _check_response_type(expected_type, expected_calls, actual_calls)
-        results["format_valid"] = _check_format_validity(actual_calls)
-        results["call_count"] = _check_call_count(expected_calls, actual_calls)
-        results["tool_name"] = _check_tool_names(expected_calls, actual_calls)
-        results["args"] = _check_arguments(expected_calls, actual_calls)
-        results["no_hallucinated_tools"] = _check_no_hallucinated_tools(actual_calls)
-
+        results = _score_dimensions(expected_calls, actual_calls, expected_type)
         applicable = {k: v for k, v in results.items() if v != N}
         overall = C if all(v == C for v in applicable.values()) else I
 
-        explanation = _build_explanation(expected_calls, actual_calls, results)
+        # If primary fails, try each alternative expected call set.
+        alt_label = ""
+        if overall == I:
+            raw = state.metadata.get("alternative_expected_tool_calls", [])
+            alternatives: list[list[dict]] = json.loads(raw) if isinstance(raw, str) else raw
+            for i, alt_expected in enumerate(alternatives):
+                alt_results = _score_dimensions(alt_expected, actual_calls, expected_type)
+                alt_applicable = {k: v for k, v in alt_results.items() if v != N}
+                if all(v == C for v in alt_applicable.values()):
+                    overall = C
+                    results = alt_results
+                    alt_label = f" (matched alternative {i + 1})"
+                    break
+
+        explanation = _build_explanation(expected_calls, actual_calls, results, alt_label)
 
         return Score(
             value=overall,
@@ -67,6 +74,22 @@ def tool_call_scorer() -> Scorer:
         )
 
     return score
+
+
+def _score_dimensions(
+    expected_calls: list[dict],
+    actual_calls: list[dict],
+    expected_type: str,
+) -> dict[str, str]:
+    """Run all dimension checks and return a results dict."""
+    return {
+        "response_type": _check_response_type(expected_type, expected_calls, actual_calls),
+        "format_valid": _check_format_validity(actual_calls),
+        "call_count": _check_call_count(expected_calls, actual_calls),
+        "tool_name": _check_tool_names(expected_calls, actual_calls),
+        "args": _check_arguments(expected_calls, actual_calls),
+        "no_hallucinated_tools": _check_no_hallucinated_tools(actual_calls),
+    }
 
 
 def _extract_tool_calls(state: TaskState) -> list[dict]:
@@ -238,6 +261,7 @@ def _build_explanation(
     expected_calls: list[dict],
     actual_calls: list[dict],
     results: dict[str, str],
+    alt_label: str = "",
 ) -> str:
     """Build a human-readable explanation of the scoring."""
     lines = [
@@ -246,7 +270,7 @@ def _build_explanation(
         f"Got {len(actual_calls)} call(s):",
         *[f"  {c.get('name', '?')}({c.get('arguments', {})})" for c in actual_calls],
         "",
-        "Checks:",
+        f"Checks{alt_label}:",
         *[f"  {'C' if v == C else ('I' if v == I else '-')} {k}: {v}" for k, v in results.items()],
     ]
     return "\n".join(lines)

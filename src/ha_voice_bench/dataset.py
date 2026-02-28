@@ -60,6 +60,10 @@ def load_ha_test_cases(
                 "inventory_file": case["inventory_file"],
                 "expected_response_type": case["expected_response_type"],
             }
+            if "alternative_expected_tool_calls" in case:
+                metadata["alternative_expected_tool_calls"] = json.dumps(
+                    case["alternative_expected_tool_calls"]
+                )
             if "metadata" in case and isinstance(case["metadata"], dict):
                 for k, v in case["metadata"].items():
                     metadata[f"meta/{k}"] = v
