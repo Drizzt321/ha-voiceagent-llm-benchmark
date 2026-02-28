@@ -12,6 +12,7 @@ logs/*
 .vscode/
 .idea/
 .DS_Store
+uv.lock
 HANDOFF.md
 
 # Directory contents excluded (may contain sensitive data).
