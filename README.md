@@ -9,8 +9,8 @@ Given a voice command and a smart home entity inventory, does the model call the
 ## Quick Start
 
 ```bash
-# Install dependencies
-uv sync
+# Install dependencies (--extra dev includes pytest, ruff, etc.)
+uv sync --extra dev
 
 # Run tests
 pytest

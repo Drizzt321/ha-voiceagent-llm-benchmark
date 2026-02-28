@@ -15,8 +15,11 @@ How to get from a fresh clone to a running benchmark eval.
 ## 1. Install Python dependencies
 
 ```bash
-uv sync
+uv sync --extra dev
 ```
+
+> **Note:** Plain `uv sync` installs only runtime dependencies. `--extra dev` is required to
+> also install pytest, ruff, and other dev tools.
 
 ---
 
