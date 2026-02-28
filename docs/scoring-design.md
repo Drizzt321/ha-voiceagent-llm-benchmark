@@ -29,9 +29,10 @@ The primary scorer. Compares the model's actual tool calls against expected tool
 | `no_hallucinated_tools` | Only valid HA tools called | C / I | No actual calls |
 | `format_valid` | Tool call is well-formed structured output | C / I | No actual calls |
 | `response_type` | Correct handling mode | C / I | Unknown response type |
-| `overall` | All applicable checks pass | C / I | Never |
 
 **C** = Correct, **I** = Incorrect, **N** = Not Applicable
+
+`overall` (C/I) is derived: all applicable (non-N) dimensions must be C. It is the scalar `Score.value` used by `accuracy()` aggregation — not a separate dimension in the breakdown.
 
 ### Response Type Logic
 
@@ -66,6 +67,14 @@ Arguments are compared with these rules:
 
 For test cases with multiple expected tool calls (e.g., "turn off the lights and lock the door"), matching is **order-independent**. The scorer finds the best permutation that satisfies all expected calls.
 
+### Alternative Expected Call Sets
+
+Some queries have more than one legitimately correct answer (e.g., `HassGetState` and `HassClimateGetTemperature` are both valid for "what's the temperature inside"). Test cases can specify a list of alternative acceptable call sets via `alternative_expected_tool_calls` in the NDJSON.
+
+The scorer tries the primary `expected_tool_calls` first. If the primary fails, it iterates through each alternative set and scores C on the first match. The explanation notes which alternative was matched (e.g., `Checks (matched alternative 1):`). If no set matches, the sample scores I as usual.
+
+See `test-data-format.md` for the field schema.
+
 ---
 
 ## Planned: Tier 2 Scorer — HA Compatibility
@@ -97,12 +106,13 @@ Runs as post-hoc re-scoring — not during the primary eval. Only scores samples
 
 ### In Inspect View
 
-Each sample shows a score dictionary. Look for:
-- **`overall: I`** with **`tool_name: C`** — right tool, wrong arguments (common with area/entity confusion)
-- **`overall: I`** with **`tool_name: I`** — fundamentally wrong tool choice
-- **`format_valid: I`** — model produced malformed tool calls (may indicate poor tool-calling fine-tuning)
-- **`no_hallucinated_tools: I`** — model invented a tool that doesn't exist
-- **`response_type: I`** — model called tools when it should have refused, or vice versa
+Each sample shows a C/I overall score (the `Score.value` scalar). The per-dimension breakdown is in the `explanation` field. Look for:
+- **overall I** with `tool_name: C` — right tool, wrong arguments (common with area/entity confusion)
+- **overall I** with `tool_name: I` — fundamentally wrong tool choice
+- `format_valid: I` — model produced malformed tool calls (may indicate poor tool-calling fine-tuning)
+- `no_hallucinated_tools: I` — model invented a tool that doesn't exist
+- `response_type: I` — model called tools when it should have refused, or vice versa
+- `Checks (matched alternative N):` in explanation — primary expected call failed but an alternative matched
 
 ### Across Configurations
 
@@ -114,6 +124,6 @@ Compare accuracy rates per dimension across model/quant/hardware configurations.
 ### Score Metadata
 
 Each `Score` includes:
-- `value` — The dict of dimension scores
-- `answer` — JSON of actual tool calls (for debugging)
-- `explanation` — Human-readable comparison of expected vs actual, with per-check results
+- `value` — Scalar C/I string (the `overall` result). Used by Inspect's `accuracy()` metric.
+- `answer` — JSON array of actual tool calls (for debugging)
+- `explanation` — Human-readable comparison of expected vs actual, with per-dimension C/I/N breakdown. Notes which alternative matched if applicable.
