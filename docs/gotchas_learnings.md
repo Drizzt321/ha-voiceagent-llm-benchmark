@@ -148,3 +148,45 @@ These are accessed from `state.messages[-1].tool_calls` (list of `ToolCall`) aft
 `generate(tool_calls="none")`.
 
 ---
+
+## 4. All `ToolDef` objects must use distinct handler functions
+
+**Affected file:** `src/ha_voice_bench/tools.py`
+
+### What happens
+
+Inspect's tool registry keys each tool by its **handler function object**. If multiple `ToolDef`
+objects share the same handler (e.g., a single module-level `_noop`), each registration
+overwrites the previous one. The last tool defined wins — every call to `use_tools()` sends 11
+copies of that last tool to the model instead of 11 distinct tools.
+
+In our case, `HassNevermind` was defined last, so the model received 11 identical
+`HassNevermind` entries and had no knowledge of `HassTurnOn`, `HassLightSet`, etc.
+
+### Symptom
+
+The model responds with plain text (e.g., `HassTurnOn(light.kitchen_ceiling)`) instead of a
+structured tool call, because it never saw the correct tools in the API request. The scorer
+receives zero tool calls and marks everything I or N.
+
+### The fix
+
+Create a **new closure per tool** using a factory function:
+
+```python
+def _make_noop():
+    async def _noop(**kwargs):
+        return "OK"
+    return _noop
+
+HASS_TURN_ON = ToolDef(tool=_make_noop(), name="HassTurnOn", ...)
+HASS_TURN_OFF = ToolDef(tool=_make_noop(), name="HassTurnOff", ...)
+# etc. — each call to _make_noop() returns a distinct function object
+```
+
+### Rule of thumb
+
+Never share a single dummy handler across multiple `ToolDef` objects. Each `ToolDef` must
+receive its own function instance, even if the implementations are identical.
+
+---

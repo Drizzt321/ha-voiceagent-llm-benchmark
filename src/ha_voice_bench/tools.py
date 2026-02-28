@@ -16,9 +16,17 @@ from inspect_ai.tool._tool_params import ToolParams
 from inspect_ai.util._json import JSONSchema
 
 
-async def _noop(**kwargs):
-    """Dummy handler — never called with tool_calls='none'."""
-    return "OK"
+def _make_noop():
+    """Return a unique async no-op per call.
+
+    Inspect's tool registry keys entries by the handler function object.
+    Sharing a single _noop across all ToolDefs causes every tool to overwrite
+    the previous one — the last definition wins. Creating a new closure per
+    tool gives each a distinct identity in the registry.
+    """
+    async def _noop(**kwargs):
+        return "OK"
+    return _noop
 
 
 def _str(description: str) -> JSONSchema:
@@ -53,21 +61,21 @@ _ENTITY_SLOTS = ToolParams(
 # --- Core Device Control Tools ---
 
 HASS_TURN_ON = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassTurnOn",
     description="Turns on/opens a device or entity",
     parameters=_ENTITY_SLOTS,
 )
 
 HASS_TURN_OFF = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassTurnOff",
     description="Turns off/closes a device or entity",
     parameters=_ENTITY_SLOTS,
 )
 
 HASS_LIGHT_SET = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassLightSet",
     description="Sets the brightness or color of a light",
     parameters=ToolParams(
@@ -82,7 +90,7 @@ HASS_LIGHT_SET = ToolDef(
 )
 
 HASS_SET_POSITION = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassSetPosition",
     description="Sets the position of an entity",
     parameters=ToolParams(
@@ -98,7 +106,7 @@ HASS_SET_POSITION = ToolDef(
 )
 
 HASS_GET_STATE = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassGetState",
     description="Gets or checks the state of an entity",
     parameters=ToolParams(
@@ -114,7 +122,7 @@ HASS_GET_STATE = ToolDef(
 )
 
 HASS_CLIMATE_SET_TEMPERATURE = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassClimateSetTemperature",
     description="Sets the desired indoor temperature",
     parameters=ToolParams(
@@ -128,7 +136,7 @@ HASS_CLIMATE_SET_TEMPERATURE = ToolDef(
 )
 
 HASS_CLIMATE_GET_TEMPERATURE = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassClimateGetTemperature",
     description="Gets the actual indoor temperature",
     parameters=ToolParams(
@@ -144,21 +152,21 @@ HASS_CLIMATE_GET_TEMPERATURE = ToolDef(
 # --- Utility Intents ---
 
 HASS_GET_CURRENT_TIME = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassGetCurrentTime",
     description="Gets the current time",
     parameters=ToolParams(),
 )
 
 HASS_GET_CURRENT_DATE = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassGetCurrentDate",
     description="Gets the current date",
     parameters=ToolParams(),
 )
 
 HASS_GET_WEATHER = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassGetWeather",
     description="Gets the current weather",
     parameters=ToolParams(
@@ -169,7 +177,7 @@ HASS_GET_WEATHER = ToolDef(
 )
 
 HASS_NEVERMIND = ToolDef(
-    tool=_noop,
+    tool=_make_noop(),
     name="HassNevermind",
     description="Cancels the current request",
     parameters=ToolParams(),
