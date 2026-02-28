@@ -18,10 +18,10 @@ pytest
 # Lint
 ruff check .
 
-# Run a benchmark eval (after darkllama is configured)
-cp .env.example .env
-# Edit .env with your server details
-inspect eval src/ha_voice_bench/task.py --model openai/local
+# Run a benchmark eval (see docs/user-setup.md for server setup)
+cp docs/env.example .env
+# Edit .env with your server address
+uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=.
 ```
 
 ## Architecture
@@ -70,7 +70,7 @@ configs/                     # Per-host server configs
 
 ## Infrastructure
 
-- **LLM Server:** llama.cpp (`llama-server`) on darkllama VM, OpenAI-compatible API at `http://darkllama.lan:8080/v1`
+- **LLM Server:** llama.cpp (`llama-server`), OpenAI-compatible API (default: `http://localhost:8080/v1`)
 - **Models:** GGUF format, Qwen 2.5 family recommended for tool-calling capability
 - **Inspect AI:** `>=0.3.184,<0.4`
 
@@ -84,6 +84,7 @@ configs/                     # Per-host server configs
 | [`docs/scoring-design.md`](docs/scoring-design.md) | Multi-dimensional scoring explained |
 | [`docs/implementation-plan-m1.md`](docs/implementation-plan-m1.md) | M1 step-by-step implementation plan |
 | [`docs/gotchas_learnings.md`](docs/gotchas_learnings.md) | Inspect AI gotchas and implementation learnings |
+| [`docs/user-setup.md`](docs/user-setup.md) | Server setup, env config, and running your first eval |
 
 ## License
 
