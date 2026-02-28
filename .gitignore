@@ -1,0 +1,22 @@
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+logs/*
+!logs/.gitkeep
+*.eval
+.env
+.vscode/
+.idea/
+.DS_Store
+
+# Directory contents excluded (may contain sensitive data).
+# The directories themselves are tracked via .gitkeep.
+# Sample/example files will be added explicitly with git add -f.
+configs/*
+!configs/.gitkeep
+reports/*
+!reports/.gitkeep
