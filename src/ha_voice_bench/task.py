@@ -41,5 +41,5 @@ def ha_voice_benchmark(
             use_tools(*get_ha_intent_tools(tool_tier)),
             ha_voice_solver(base_dir=str(_resolve(base_dir, ""))),
         ],
-        scorer=tool_call_scorer(),
+        scorer=tool_call_scorer(tier=tool_tier),
     )

@@ -4,6 +4,8 @@ from ha_voice_bench.scorers.tool_call import (
     C,
     I,
     N,
+    VALID_TOOL_NAMES_FULL,
+    VALID_TOOL_NAMES_MVP,
     _build_explanation,
     _check_arguments,
     _check_call_count,
@@ -143,16 +145,36 @@ class TestFormatValidity:
 
 
 class TestHallucinatedTools:
-    def test_valid_tools(self):
+    def test_valid_tools_mvp(self):
         calls = [{"name": "HassTurnOn"}, {"name": "HassTurnOff"}]
-        assert _check_no_hallucinated_tools(calls) == C
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == C
 
-    def test_hallucinated(self):
+    def test_hallucinated_mvp(self):
         calls = [{"name": "MadeUpTool"}]
-        assert _check_no_hallucinated_tools(calls) == I
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == I
 
     def test_no_calls(self):
-        assert _check_no_hallucinated_tools([]) == N
+        assert _check_no_hallucinated_tools([], VALID_TOOL_NAMES_MVP) == N
+
+    def test_full_tier_tool_valid_in_full(self):
+        # HassMediaPause is not in MVP but is valid in full
+        calls = [{"name": "HassMediaPause"}]
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_FULL) == C
+
+    def test_full_tier_tool_hallucinated_in_mvp(self):
+        # Model called a real HA tool it wasn't told about in this eval context
+        calls = [{"name": "HassMediaPause"}]
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == I
+
+    def test_full_tier_names_superset_of_mvp(self):
+        assert VALID_TOOL_NAMES_MVP <= VALID_TOOL_NAMES_FULL
+
+    def test_full_tier_has_31_tools(self):
+        assert len(VALID_TOOL_NAMES_FULL) == 31
+
+    def test_made_up_tool_always_hallucinated(self):
+        calls = [{"name": "HassDoMagic"}]
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_FULL) == I
 
 
 class TestToolCallMatches:
@@ -177,7 +199,7 @@ class TestScoreDimensions:
     def test_all_correct(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
-        r = _score_dimensions(exp, act, "action_done")
+        r = _score_dimensions(exp, act, "action_done", VALID_TOOL_NAMES_MVP)
         assert r["tool_name"] == C
         assert r["args"] == C
         assert "overall" not in r  # overall computed by caller, not returned here
@@ -185,7 +207,7 @@ class TestScoreDimensions:
     def test_wrong_tool(self):
         exp = [{"name": "HassClimateGetTemperature", "arguments": {}}]
         act = [{"name": "HassGetState", "arguments": {}}]
-        r = _score_dimensions(exp, act, "query_response")
+        r = _score_dimensions(exp, act, "query_response", VALID_TOOL_NAMES_MVP)
         assert r["tool_name"] == I
 
     def test_alternative_match(self):
@@ -199,13 +221,13 @@ class TestScoreDimensions:
         actual = [{"name": "HassGetState", "arguments": {"name": "Hallway Temperature"}}]
 
         # Primary fails
-        primary_r = _score_dimensions(primary, actual, "query_response")
+        primary_r = _score_dimensions(primary, actual, "query_response", VALID_TOOL_NAMES_MVP)
         primary_applicable = {k: v for k, v in primary_r.items() if v != N}
         assert not all(v == C for v in primary_applicable.values())
 
         # Alternative (new object format) passes
         alt_calls = alt_obj["tool_calls"]
-        alt_r = _score_dimensions(alt_calls, actual, "query_response")
+        alt_r = _score_dimensions(alt_calls, actual, "query_response", VALID_TOOL_NAMES_MVP)
         alt_applicable = {k: v for k, v in alt_r.items() if v != N}
         assert all(v == C for v in alt_applicable.values())
 

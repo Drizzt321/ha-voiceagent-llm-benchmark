@@ -13,8 +13,11 @@ from inspect_ai.solver import TaskState
 
 logger = logging.getLogger(__name__)
 
-# Valid HA intent tool names (MVP set: 7 core + 4 utility = 11)
-VALID_TOOL_NAMES = {
+# Valid HA intent tool names by tier — used for hallucination detection.
+# A model calling a name outside the active tier's set is flagged as hallucinating
+# (it was never told that tool exists in this eval context).
+
+VALID_TOOL_NAMES_MVP = {
     "HassTurnOn",
     "HassTurnOff",
     "HassLightSet",
@@ -28,14 +31,51 @@ VALID_TOOL_NAMES = {
     "HassNevermind",
 }
 
+VALID_TOOL_NAMES_FULL = VALID_TOOL_NAMES_MVP | {
+    # Tier 2: Media
+    "HassMediaPause",
+    "HassMediaUnpause",
+    "HassMediaNext",
+    "HassMediaPrevious",
+    "HassSetVolume",
+    "HassMediaPlayerMute",
+    "HassMediaPlayerUnmute",
+    "HassSetVolumeRelative",
+    "HassMediaSearchAndPlay",
+    # Tier 3: Household
+    "HassFanSetSpeed",
+    "HassVacuumStart",
+    "HassVacuumReturnToBase",
+    "HassLawnMowerStartMowing",
+    "HassLawnMowerDock",
+    "HassListAddItem",
+    "HassListCompleteItem",
+    "HassShoppingListAddItem",
+    "HassShoppingListCompleteItem",
+    # Tier 5: Additional utility
+    "HassRespond",
+    "HassBroadcast",
+}
+
 C = "C"  # Correct
 I = "I"  # Incorrect
 N = "N"  # Not applicable
 
 
 @scorer(metrics=[accuracy()])
-def tool_call_scorer() -> Scorer:
-    """Score model tool calls against expected tool calls."""
+def tool_call_scorer(tier: str = "mvp") -> Scorer:
+    """Score model tool calls against expected tool calls.
+
+    Args:
+        tier: Tool tier used in the eval — 'mvp' or 'full'. Controls which tool
+            names are considered valid for hallucination detection.
+    """
+    if tier == "full":
+        valid_names = VALID_TOOL_NAMES_FULL
+    elif tier == "mvp":
+        valid_names = VALID_TOOL_NAMES_MVP
+    else:
+        raise ValueError(f"Unknown tool tier: {tier}")
 
     async def score(state: TaskState, target: Target) -> Score:
         try:
@@ -47,7 +87,7 @@ def tool_call_scorer() -> Scorer:
         actual_calls = _extract_tool_calls(state)
         expected_type = state.metadata.get("expected_response_type", "action_done")
 
-        results = _score_dimensions(expected_calls, actual_calls, expected_type)
+        results = _score_dimensions(expected_calls, actual_calls, expected_type, valid_names)
         applicable = {k: v for k, v in results.items() if v != N}
         overall = C if all(v == C for v in applicable.values()) else I
 
@@ -67,7 +107,7 @@ def tool_call_scorer() -> Scorer:
                     alt_calls = alt
                     alt_quality = "acceptable"
                     alt_reason = ""
-                alt_results = _score_dimensions(alt_calls, actual_calls, expected_type)
+                alt_results = _score_dimensions(alt_calls, actual_calls, expected_type, valid_names)
                 alt_applicable = {k: v for k, v in alt_results.items() if v != N}
                 if all(v == C for v in alt_applicable.values()):
                     overall = C
@@ -91,6 +131,7 @@ def _score_dimensions(
     expected_calls: list[dict],
     actual_calls: list[dict],
     expected_type: str,
+    valid_names: set[str],
 ) -> dict[str, str]:
     """Run all dimension checks and return a results dict."""
     return {
@@ -99,7 +140,7 @@ def _score_dimensions(
         "call_count": _check_call_count(expected_calls, actual_calls),
         "tool_name": _check_tool_names(expected_calls, actual_calls),
         "args": _check_arguments(expected_calls, actual_calls),
-        "no_hallucinated_tools": _check_no_hallucinated_tools(actual_calls),
+        "no_hallucinated_tools": _check_no_hallucinated_tools(actual_calls, valid_names),
     }
 
 
@@ -252,13 +293,13 @@ def _normalize(value: Any) -> str:
     return str(value).strip().lower()
 
 
-def _check_no_hallucinated_tools(actual_calls: list[dict]) -> str:
+def _check_no_hallucinated_tools(actual_calls: list[dict], valid_names: set[str]) -> str:
     """Check that only valid HA intent tools were called."""
     if not actual_calls:
         return N
     for call in actual_calls:
         name = call.get("name")
-        if name and name not in VALID_TOOL_NAMES:
+        if name and name not in valid_names:
             return I
     return C
 
