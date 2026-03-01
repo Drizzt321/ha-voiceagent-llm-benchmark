@@ -34,10 +34,10 @@ def test_light_set_has_brightness():
 
 
 def test_light_set_no_device_class():
-    """HassLightSet doesn't have domain/device_class slots."""
+    """HassLightSet has domain but not device_class (ServiceIntentHandler, no device_classes set)."""
     tool = next(t for t in MVP_TOOLS if t.name == "HassLightSet")
     assert "device_class" not in tool.parameters.properties
-    assert "domain" not in tool.parameters.properties
+    assert "domain" in tool.parameters.properties
 
 
 def test_climate_set_has_temperature():

@@ -4,8 +4,22 @@ Defines ToolDef objects matching HA's _format_tool() output format.
 These are registered via use_tools() so the model sees them in the API request,
 but generate(tool_calls="none") means they're never executed.
 
-Tool inventory sourced from:
-  https://developers.home-assistant.io/docs/intent_builtin/
+Verified against HA core release 2026.2.3
+(commit 9c640fe0fa008d6e80aa4cc88c9c1734605fb3e0).
+
+Slot schemas derived from homeassistant/helpers/intent.py (ServiceIntentHandler,
+DynamicServiceIntentHandler) and per-component intent.py files.
+
+Mapping conventions:
+- vol.Any("name", "area", "floor") key in HA schemas → all three listed as
+  optional here; HA enforces "at least one required" at runtime, which cannot
+  be expressed cleanly in JSON Schema.
+- preferred_area_id / preferred_floor_id slots are internal system slots
+  filled by HA's conversation layer; not exposed to the LLM.
+- HassMediaPlayerMute/Unmute: is_volume_muted slot is set by the handler, not
+  the LLM; not exposed here.
+- ServiceIntentHandler with device_classes set → device_class slot present.
+- ServiceIntentHandler without device_classes → no device_class slot.
 
 Note: parameters are passed as ToolParams (not plain dicts) so ToolDef skips
 function-signature introspection — required because _noop uses **kwargs.
@@ -49,8 +63,10 @@ def _str_array(description: str) -> JSONSchema:
     return JSONSchema(type="array", items=JSONSchema(type="string"), description=description)
 
 
-# --- Common entity slots (reused across tools) ---
+# --- Common entity slot sets ---
 
+# Full entity targeting: used by ServiceIntentHandler with device_classes set.
+# Covers HassTurnOn/Off and media player service tools.
 _ENTITY_SLOTS = ToolParams(
     properties={
         "name": _str("Name of the entity"),
@@ -61,34 +77,56 @@ _ENTITY_SLOTS = ToolParams(
     }
 )
 
+# Service entity targeting: used by ServiceIntentHandler without device_classes.
+# Covers fan, vacuum, lawn_mower tools.
+_SERVICE_SLOTS = ToolParams(
+    properties={
+        "name": _str("Name of the entity"),
+        "area": _str("Name of the area"),
+        "floor": _str("Name of the floor"),
+        "domain": _str_array("Domain of the entity"),
+    }
+)
+
 
 # --- Core Device Control Tools ---
 
 HASS_TURN_ON = ToolDef(
     tool=_make_noop(),
     name="HassTurnOn",
-    description="Turns on/opens a device or entity",
+    description=(
+        "Turns on/opens/presses a device or entity. For locks, this performs a 'lock' "
+        "action. Use for requests like 'turn on', 'activate', 'enable', or 'lock'."
+    ),
     parameters=_ENTITY_SLOTS,
 )
 
 HASS_TURN_OFF = ToolDef(
     tool=_make_noop(),
     name="HassTurnOff",
-    description="Turns off/closes a device or entity",
+    description=(
+        "Turns off/closes a device or entity. For locks, this performs an 'unlock' "
+        "action. Use for requests like 'turn off', 'deactivate', 'disable', or 'unlock'."
+    ),
     parameters=_ENTITY_SLOTS,
 )
 
 HASS_LIGHT_SET = ToolDef(
     tool=_make_noop(),
     name="HassLightSet",
-    description="Sets the brightness or color of a light",
+    description="Sets the brightness percentage or color of a light",
     parameters=ToolParams(
         properties={
             "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
             "floor": _str("Name of the floor"),
-            "brightness": _int("Brightness percentage from 0 to 100"),
+            "domain": _str_array("Domain of the entity"),
+            "brightness": _int(
+                "The brightness percentage of the light between 0 and 100, "
+                "where 0 is off and 100 is fully lit"
+            ),
             "color": _str("Name of color"),
+            "temperature": _int("Color temperature in Kelvin"),
         }
     ),
 )
@@ -96,7 +134,7 @@ HASS_LIGHT_SET = ToolDef(
 HASS_SET_POSITION = ToolDef(
     tool=_make_noop(),
     name="HassSetPosition",
-    description="Sets the position of an entity",
+    description="Sets the position of a device or entity",
     parameters=ToolParams(
         properties={
             "name": _str("Name of the entity"),
@@ -105,14 +143,15 @@ HASS_SET_POSITION = ToolDef(
             "domain": _str_array("Domain of the entity"),
             "device_class": _str_array("Device class of the entity"),
             "position": _int("Position from 0 to 100"),
-        }
+        },
+        required=["position"],
     ),
 )
 
 HASS_GET_STATE = ToolDef(
     tool=_make_noop(),
     name="HassGetState",
-    description="Gets or checks the state of an entity",
+    description="Gets or checks the state of a device or entity",
     parameters=ToolParams(
         properties={
             "name": _str("Name of the entity"),
@@ -120,7 +159,7 @@ HASS_GET_STATE = ToolDef(
             "floor": _str("Name of the floor"),
             "domain": _str_array("Domain of the entity"),
             "device_class": _str_array("Device class of the entity"),
-            "state": _str("Name of state to match"),
+            "state": _str_array("State or states to match"),
         }
     ),
 )
@@ -128,21 +167,22 @@ HASS_GET_STATE = ToolDef(
 HASS_CLIMATE_SET_TEMPERATURE = ToolDef(
     tool=_make_noop(),
     name="HassClimateSetTemperature",
-    description="Sets the desired indoor temperature",
+    description="Sets the target temperature of a climate device or entity",
     parameters=ToolParams(
         properties={
             "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
             "floor": _str("Name of the floor"),
             "temperature": _num("Temperature in degrees"),
-        }
+        },
+        required=["temperature"],
     ),
 )
 
 HASS_CLIMATE_GET_TEMPERATURE = ToolDef(
     tool=_make_noop(),
     name="HassClimateGetTemperature",
-    description="Gets the actual indoor temperature",
+    description="Gets the current temperature of a climate device or entity",
     parameters=ToolParams(
         properties={
             "name": _str("Name of the entity"),
@@ -183,58 +223,59 @@ HASS_GET_WEATHER = ToolDef(
 HASS_NEVERMIND = ToolDef(
     tool=_make_noop(),
     name="HassNevermind",
-    description="Cancels the current request",
+    description="Cancels the current request and does nothing",
     parameters=ToolParams(),
 )
 
 
 # --- Tier 2: Media Control ---
 
-_MEDIA_SLOTS = ToolParams(
-    properties={
-        "name": _str("Name of the media player"),
-        "area": _str("Name of the area"),
-    }
-)
+# HassMediaPause/Unpause/Next/Previous/SetVolume/Mute/Unmute are registered via
+# ServiceIntentHandler with device_classes={MediaPlayerDeviceClass}, giving the
+# full entity targeting schema (name, area, floor, domain, device_class).
 
 HASS_MEDIA_PAUSE = ToolDef(
     tool=_make_noop(),
     name="HassMediaPause",
     description="Pauses a media player",
-    parameters=_MEDIA_SLOTS,
+    parameters=_ENTITY_SLOTS,
 )
 
 HASS_MEDIA_UNPAUSE = ToolDef(
     tool=_make_noop(),
     name="HassMediaUnpause",
-    description="Unpauses a media player",
-    parameters=_MEDIA_SLOTS,
+    description="Resumes a media player",
+    parameters=_ENTITY_SLOTS,
 )
 
 HASS_MEDIA_NEXT = ToolDef(
     tool=_make_noop(),
     name="HassMediaNext",
-    description="Skips to the next item on a media player",
-    parameters=_MEDIA_SLOTS,
+    description="Skips a media player to the next item",
+    parameters=_ENTITY_SLOTS,
 )
 
 HASS_MEDIA_PREVIOUS = ToolDef(
     tool=_make_noop(),
     name="HassMediaPrevious",
-    description="Skips to the previous item on a media player",
-    parameters=_MEDIA_SLOTS,
+    description="Replays the previous item for a media player",
+    parameters=_ENTITY_SLOTS,
 )
 
 HASS_SET_VOLUME = ToolDef(
     tool=_make_noop(),
     name="HassSetVolume",
-    description="Sets the volume of a media player",
+    description="Sets the volume percentage of a media player",
     parameters=ToolParams(
         properties={
-            "name": _str("Name of the media player"),
+            "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
-            "volume_level": _int("Volume level from 0 to 100"),
-        }
+            "floor": _str("Name of the floor"),
+            "domain": _str_array("Domain of the entity"),
+            "device_class": _str_array("Device class of the entity"),
+            "volume_level": _int("The volume percentage of the media player"),
+        },
+        required=["volume_level"],
     ),
 )
 
@@ -242,140 +283,148 @@ HASS_MEDIA_PLAYER_MUTE = ToolDef(
     tool=_make_noop(),
     name="HassMediaPlayerMute",
     description="Mutes a media player",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the media player"),
-        }
-    ),
+    parameters=_ENTITY_SLOTS,
 )
 
 HASS_MEDIA_PLAYER_UNMUTE = ToolDef(
     tool=_make_noop(),
     name="HassMediaPlayerUnmute",
     description="Unmutes a media player",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the media player"),
-        }
-    ),
+    parameters=_ENTITY_SLOTS,
 )
 
+# HassSetVolumeRelative uses a custom handler (not ServiceIntentHandler) with its
+# own slot_schema: name/area/floor for targeting (no domain/device_class) and
+# volume_step as a required union of "up"/"down" strings or an integer percentage.
 HASS_SET_VOLUME_RELATIVE = ToolDef(
     tool=_make_noop(),
     name="HassSetVolumeRelative",
     description="Increases or decreases the volume of a media player",
     parameters=ToolParams(
         properties={
-            "name": _str("Name of the media player"),
+            "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
             "floor": _str("Name of the floor"),
-            "volume_step": _int("Volume step from -100 to 100 (negative to decrease)"),
-        }
+            "volume_step": JSONSchema(
+                anyOf=[
+                    JSONSchema(type="string", enum=["up", "down"]),
+                    JSONSchema(type="integer"),
+                ],
+                description="Volume change: 'up', 'down', or a percentage from -100 to 100",
+            ),
+        },
+        required=["volume_step"],
     ),
 )
 
+# HassMediaSearchAndPlay uses a custom handler with its own slot_schema:
+# name/area/floor for targeting (no domain/device_class), search_query required,
+# media_class optional with fixed enum values from MediaClass.
 HASS_MEDIA_SEARCH_AND_PLAY = ToolDef(
     tool=_make_noop(),
     name="HassMediaSearchAndPlay",
-    description="Searches for and plays media on a media player",
+    description="Searches for media and plays the first result",
     parameters=ToolParams(
         properties={
-            "name": _str("Name of the media player"),
+            "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
+            "floor": _str("Name of the floor"),
             "search_query": _str("Search query for the media to play"),
-            "media_class": _str("Type of media (album, artist, track, playlist, etc.)"),
-        }
+            "media_class": JSONSchema(
+                type="string",
+                enum=[
+                    "album", "app", "artist", "channel", "composer",
+                    "contributing_artist", "directory", "episode", "game",
+                    "genre", "image", "movie", "music", "playlist", "podcast",
+                    "season", "track", "tv_show", "url", "video",
+                ],
+                description="Type of media",
+            ),
+        },
+        required=["search_query"],
     ),
 )
 
 
 # --- Tier 3: Household ---
 
+# HassFanSetSpeed, HassVacuumStart/ReturnToBase, HassLawnMowerStartMowing/Dock
+# are all registered via ServiceIntentHandler without device_classes, giving
+# the service targeting schema: name, area, floor, domain.
+
 HASS_FAN_SET_SPEED = ToolDef(
     tool=_make_noop(),
     name="HassFanSetSpeed",
-    description="Sets the speed of a fan",
+    description="Sets a fan's speed by percentage",
     parameters=ToolParams(
         properties={
-            "name": _str("Name of the fan"),
+            "name": _str("Name of the entity"),
             "area": _str("Name of the area"),
             "floor": _str("Name of the floor"),
-            "percentage": _int("Fan speed percentage from 0 to 100"),
-        }
+            "domain": _str_array("Domain of the entity"),
+            "percentage": _int("The speed percentage of the fan"),
+        },
+        required=["percentage"],
     ),
 )
 
 HASS_VACUUM_START = ToolDef(
     tool=_make_noop(),
     name="HassVacuumStart",
-    description="Starts a vacuum cleaner",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the vacuum"),
-            "area": _str("Name of the area"),
-            "floor": _str("Name of the floor"),
-        }
-    ),
+    description="Starts a vacuum",
+    parameters=_SERVICE_SLOTS,
 )
 
 HASS_VACUUM_RETURN_TO_BASE = ToolDef(
     tool=_make_noop(),
     name="HassVacuumReturnToBase",
-    description="Returns a vacuum cleaner to its base",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the vacuum"),
-            "area": _str("Name of the area"),
-        }
-    ),
+    description="Returns a vacuum to base",
+    parameters=_SERVICE_SLOTS,
 )
 
 HASS_LAWN_MOWER_START_MOWING = ToolDef(
     tool=_make_noop(),
     name="HassLawnMowerStartMowing",
     description="Starts a lawn mower",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the lawn mower"),
-        }
-    ),
+    parameters=_SERVICE_SLOTS,
 )
 
 HASS_LAWN_MOWER_DOCK = ToolDef(
     tool=_make_noop(),
     name="HassLawnMowerDock",
-    description="Sends a lawn mower to its dock",
-    parameters=ToolParams(
-        properties={
-            "name": _str("Name of the lawn mower"),
-        }
-    ),
+    description="Sends a lawn mower to dock",
+    parameters=_SERVICE_SLOTS,
 )
 
+# HassListAddItem/CompleteItem: custom handlers with item and name both required.
 HASS_LIST_ADD_ITEM = ToolDef(
     tool=_make_noop(),
     name="HassListAddItem",
-    description="Adds an item to a todo list",
+    description="Add item to a todo list",
     parameters=ToolParams(
         properties={
             "item": _str("The item to add to the list"),
             "name": _str("Name of the todo list"),
-        }
+        },
+        required=["item", "name"],
     ),
 )
 
 HASS_LIST_COMPLETE_ITEM = ToolDef(
     tool=_make_noop(),
     name="HassListCompleteItem",
-    description="Checks off an item on a todo list",
+    description="Complete item on a todo list",
     parameters=ToolParams(
         properties={
             "item": _str("The item to check off"),
             "name": _str("Name of the todo list"),
-        }
+        },
+        required=["item", "name"],
     ),
 )
 
+# HassShoppingListAddItem/CompleteItem: custom handlers, item required (bare key
+# in voluptuous schema = vol.Required by default).
 HASS_SHOPPING_LIST_ADD_ITEM = ToolDef(
     tool=_make_noop(),
     name="HassShoppingListAddItem",
@@ -383,18 +432,20 @@ HASS_SHOPPING_LIST_ADD_ITEM = ToolDef(
     parameters=ToolParams(
         properties={
             "item": _str("The item to add to the shopping list"),
-        }
+        },
+        required=["item"],
     ),
 )
 
 HASS_SHOPPING_LIST_COMPLETE_ITEM = ToolDef(
     tool=_make_noop(),
     name="HassShoppingListCompleteItem",
-    description="Checks off an item on the shopping list",
+    description="Marks an item as completed on the shopping list",
     parameters=ToolParams(
         properties={
-            "item": _str("The item to check off"),
-        }
+            "item": _str("The item to mark as completed"),
+        },
+        required=["item"],
     ),
 )
 
@@ -404,7 +455,7 @@ HASS_SHOPPING_LIST_COMPLETE_ITEM = ToolDef(
 HASS_RESPOND = ToolDef(
     tool=_make_noop(),
     name="HassRespond",
-    description="Returns a response to the user without taking any action",
+    description="Returns the provided response with no action.",
     parameters=ToolParams(
         properties={
             "response": _str("The response text to return"),
@@ -415,11 +466,12 @@ HASS_RESPOND = ToolDef(
 HASS_BROADCAST = ToolDef(
     tool=_make_noop(),
     name="HassBroadcast",
-    description="Announces a message on other voice satellites",
+    description="Broadcast a message through the home",
     parameters=ToolParams(
         properties={
             "message": _str("The message to broadcast"),
-        }
+        },
+        required=["message"],
     ),
 )
 
