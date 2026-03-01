@@ -46,13 +46,27 @@ Example: `small-HassTurnOn-light-kitchen_ceiling-001`
 
 **`expected_tool_calls`** — Array of tool calls the model should make. Empty array `[]` for error/clarification cases. Order doesn't matter (scorer matches order-independently).
 
-**`alternative_expected_tool_calls`** *(optional)* — List of alternative acceptable call sets. Each element is an array of tool calls (same format as `expected_tool_calls`). If the model's response doesn't match the primary `expected_tool_calls` but matches any alternative set, the sample scores C. Use when multiple tool choices are legitimately correct.
+**`alternative_expected_tool_calls`** *(optional)* — List of alternative acceptable call sets. Each element is an object with `tool_calls`, `quality`, and `reason` fields. If the model's response doesn't match the primary `expected_tool_calls` but matches any alternative's `tool_calls`, the sample scores C. The `quality` and `reason` fields are metadata used for downstream reporting — they do not affect pass/fail.
 
 ```json
 "alternative_expected_tool_calls": [
-  [{"name": "HassGetState", "arguments": {}}]
+  {
+    "tool_calls": [{"name": "HassGetState", "arguments": {}}],
+    "quality": "acceptable",
+    "reason": "Returns sensor reading but not climate-specific data"
+  }
 ]
 ```
+
+**Quality tiers** (best to worst):
+
+| Tier | Meaning |
+|------|---------|
+| `equivalent` | Alternative is equally good; the primary just happened to be listed first |
+| `acceptable` | Works well enough for the user's intent, but not ideal |
+| `degraded` | Technically works but retrieves wrong data type or is significantly incomplete |
+
+The primary `expected_tool_calls` is implicitly `optimal` and has no quality label. Quality is recorded in `Score.explanation` as `MATCH_QUALITY: <tier>` for downstream analysis.
 
 **`expected_response_type`** — How the model should respond:
 - `action_done` — Model should call tool(s) to perform an action

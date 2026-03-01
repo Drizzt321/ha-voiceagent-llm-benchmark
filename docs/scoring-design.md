@@ -71,9 +71,38 @@ For test cases with multiple expected tool calls (e.g., "turn off the lights and
 
 Some queries have more than one legitimately correct answer (e.g., `HassGetState` and `HassClimateGetTemperature` are both valid for "what's the temperature inside"). Test cases can specify a list of alternative acceptable call sets via `alternative_expected_tool_calls` in the NDJSON.
 
-The scorer tries the primary `expected_tool_calls` first. If the primary fails, it iterates through each alternative set and scores C on the first match. The explanation notes which alternative was matched (e.g., `Checks (matched alternative 1):`). If no set matches, the sample scores I as usual.
+The scorer tries the primary `expected_tool_calls` first. If the primary fails, it iterates through each alternative and scores C on the first match. `Score.value` stays binary C/I — quality does not affect pass/fail.
 
-See `test-data-format.md` for the field schema.
+#### Quality Tiers
+
+Each alternative carries a `quality` label indicating *how good* the match is relative to the primary:
+
+| Tier | Meaning |
+|------|---------|
+| `optimal` | Primary `expected_tool_calls` (implicit; no label needed) |
+| `equivalent` | Alternative is equally good; primary just listed first |
+| `acceptable` | Works well enough for the user's intent, but not ideal |
+| `degraded` | Technically works but retrieves wrong data type or is significantly incomplete |
+
+#### Explanation Output
+
+Every scored sample emits `MATCH_QUALITY: <tier>` as the first line of `Score.explanation`, making it easy to grep or parse from logs:
+
+```
+MATCH_QUALITY: acceptable
+MATCH_REASON: Returns sensor reading but not climate-specific data
+Expected 1 call(s):
+  HassClimateGetTemperature({})
+Got 1 call(s):
+  HassGetState({'name': 'Hallway Temperature'})
+...
+```
+
+`MATCH_REASON:` is emitted only when the matched alternative includes a non-empty `reason`. For primary matches, `MATCH_QUALITY: optimal` is emitted with no `MATCH_REASON:` line.
+
+This supports downstream reporting such as: "what fraction of C scores were optimal vs. merely acceptable?"
+
+See `test-data-format.md` for the full field schema.
 
 ---
 
@@ -112,7 +141,7 @@ Each sample shows a C/I overall score (the `Score.value` scalar). The per-dimens
 - `format_valid: I` — model produced malformed tool calls (may indicate poor tool-calling fine-tuning)
 - `no_hallucinated_tools: I` — model invented a tool that doesn't exist
 - `response_type: I` — model called tools when it should have refused, or vice versa
-- `Checks (matched alternative N):` in explanation — primary expected call failed but an alternative matched
+- `MATCH_QUALITY: acceptable` (or `degraded`) in explanation — primary expected call failed but an alternative matched; quality indicates how good the match was
 
 ### Across Configurations
 

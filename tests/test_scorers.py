@@ -4,6 +4,7 @@ from ha_voice_bench.scorers.tool_call import (
     C,
     I,
     N,
+    _build_explanation,
     _check_arguments,
     _check_call_count,
     _check_format_validity,
@@ -188,9 +189,13 @@ class TestScoreDimensions:
         assert r["tool_name"] == I
 
     def test_alternative_match(self):
-        """Simulate the alternative matching loop used by the scorer."""
+        """Simulate the alternative matching loop used by the scorer with new object format."""
         primary = [{"name": "HassClimateGetTemperature", "arguments": {}}]
-        alternative = [{"name": "HassGetState", "arguments": {}}]
+        alt_obj = {
+            "tool_calls": [{"name": "HassGetState", "arguments": {}}],
+            "quality": "acceptable",
+            "reason": "Returns sensor reading but not climate-specific data",
+        }
         actual = [{"name": "HassGetState", "arguments": {"name": "Hallway Temperature"}}]
 
         # Primary fails
@@ -198,7 +203,41 @@ class TestScoreDimensions:
         primary_applicable = {k: v for k, v in primary_r.items() if v != N}
         assert not all(v == C for v in primary_applicable.values())
 
-        # Alternative passes
-        alt_r = _score_dimensions(alternative, actual, "query_response")
+        # Alternative (new object format) passes
+        alt_calls = alt_obj["tool_calls"]
+        alt_r = _score_dimensions(alt_calls, actual, "query_response")
         alt_applicable = {k: v for k, v in alt_r.items() if v != N}
         assert all(v == C for v in alt_applicable.values())
+
+
+class TestBuildExplanation:
+    def _make_results(self) -> dict[str, str]:
+        return {"tool_name": C, "args": C, "call_count": C, "format_valid": C, "no_hallucinated_tools": C, "response_type": C}
+
+    def test_optimal_quality_always_emitted(self):
+        exp = [{"name": "HassTurnOn", "arguments": {}}]
+        act = [{"name": "HassTurnOn", "arguments": {}}]
+        explanation = _build_explanation(exp, act, self._make_results())
+        assert "MATCH_QUALITY: optimal" in explanation
+
+    def test_acceptable_quality_emitted(self):
+        exp = [{"name": "HassClimateGetTemperature", "arguments": {}}]
+        act = [{"name": "HassGetState", "arguments": {}}]
+        explanation = _build_explanation(exp, act, self._make_results(), match_quality="acceptable")
+        assert "MATCH_QUALITY: acceptable" in explanation
+
+    def test_match_reason_emitted_when_set(self):
+        exp = [{"name": "HassClimateGetTemperature", "arguments": {}}]
+        act = [{"name": "HassGetState", "arguments": {}}]
+        explanation = _build_explanation(
+            exp, act, self._make_results(),
+            match_quality="acceptable",
+            match_reason="Returns sensor reading but not climate-specific data",
+        )
+        assert "MATCH_REASON: Returns sensor reading but not climate-specific data" in explanation
+
+    def test_match_reason_omitted_when_empty(self):
+        exp = [{"name": "HassTurnOn", "arguments": {}}]
+        act = [{"name": "HassTurnOn", "arguments": {}}]
+        explanation = _build_explanation(exp, act, self._make_results())
+        assert "MATCH_REASON" not in explanation

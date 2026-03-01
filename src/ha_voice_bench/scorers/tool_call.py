@@ -52,20 +52,31 @@ def tool_call_scorer() -> Scorer:
         overall = C if all(v == C for v in applicable.values()) else I
 
         # If primary fails, try each alternative expected call set.
-        alt_label = ""
+        match_quality = "optimal"
+        match_reason = ""
         if overall == I:
             raw = state.metadata.get("alternative_expected_tool_calls", [])
-            alternatives: list[list[dict]] = json.loads(raw) if isinstance(raw, str) else raw
-            for i, alt_expected in enumerate(alternatives):
-                alt_results = _score_dimensions(alt_expected, actual_calls, expected_type)
+            alternatives: list[dict | list] = json.loads(raw) if isinstance(raw, str) else raw
+            for alt in alternatives:
+                if isinstance(alt, dict):
+                    alt_calls: list[dict] = alt.get("tool_calls", [])
+                    alt_quality: str = alt.get("quality", "acceptable")
+                    alt_reason: str = alt.get("reason", "")
+                else:
+                    # Legacy flat-array format
+                    alt_calls = alt
+                    alt_quality = "acceptable"
+                    alt_reason = ""
+                alt_results = _score_dimensions(alt_calls, actual_calls, expected_type)
                 alt_applicable = {k: v for k, v in alt_results.items() if v != N}
                 if all(v == C for v in alt_applicable.values()):
                     overall = C
                     results = alt_results
-                    alt_label = f" (matched alternative {i + 1})"
+                    match_quality = alt_quality
+                    match_reason = alt_reason
                     break
 
-        explanation = _build_explanation(expected_calls, actual_calls, results, alt_label)
+        explanation = _build_explanation(expected_calls, actual_calls, results, match_quality, match_reason)
 
         return Score(
             value=overall,
@@ -261,16 +272,22 @@ def _build_explanation(
     expected_calls: list[dict],
     actual_calls: list[dict],
     results: dict[str, str],
-    alt_label: str = "",
+    match_quality: str = "optimal",
+    match_reason: str = "",
 ) -> str:
     """Build a human-readable explanation of the scoring."""
     lines = [
+        f"MATCH_QUALITY: {match_quality}",
+    ]
+    if match_reason:
+        lines.append(f"MATCH_REASON: {match_reason}")
+    lines += [
         f"Expected {len(expected_calls)} call(s):",
         *[f"  {c.get('name', '?')}({c.get('arguments', {})})" for c in expected_calls],
         f"Got {len(actual_calls)} call(s):",
         *[f"  {c.get('name', '?')}({c.get('arguments', {})})" for c in actual_calls],
         "",
-        f"Checks{alt_label}:",
+        "Checks:",
         *[f"  {'C' if v == C else ('I' if v == I else '-')} {k}: {v}" for k, v in results.items()],
     ]
     return "\n".join(lines)
