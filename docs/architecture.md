@@ -97,7 +97,44 @@ Smart homes vary enormously in size. A 500-entity home is a harder problem than 
 
 ## Infrastructure
 
-- **LLM Server:** llama.cpp (`llama-server`) on a VM with GTX 1080 8GB, exposed as OpenAI-compatible API
-- **Eval Runner:** Inspect AI on the development desktop, connected to llama-server over LAN
+- **LLM Server:** llama.cpp (`llama-server`) on a dedicated inference host, exposed as an OpenAI-compatible API at `http://localhost:8080/v1` (or a LAN address configured in `.env`)
+- **Eval Runner:** Inspect AI on the development machine, connected to the inference host
 - **Models:** GGUF format, primarily Qwen 2.5 family for tool-calling capability
 - **Logs:** Stored in `logs/`, viewable with `inspect view`
+
+## Running Conventions
+
+### Serial execution
+
+Always run with `--max-connections 1`. Concurrent requests skew latency measurements and can
+stall llama.cpp under large tool-call prompts (31 tools × many samples). See
+`gotchas_learnings.md` §7.
+
+### Display modes
+
+Use `--display plain` for interactive runs (progress lines, no TUI). Use `--display none` for
+automated batch runs where log files are the only record. See `gotchas_learnings.md` §8 for the
+full table and example commands.
+
+### Interactive run (testing / spot-checking)
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display plain
+```
+
+### Automated run (matrix orchestration, Step 18+)
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display none \
+  --no-fail-on-error \
+  --log-dir logs/<config-id> \
+  --tags <model> <quant> <hw> \
+  --metadata model=<model> quant=<quant> hw=<hw> \
+  --seed 42
+```

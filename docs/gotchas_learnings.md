@@ -263,8 +263,8 @@ Always pass `--max-connections 1` to enforce serial execution:
 ```bash
 uv run inspect eval src/ha_voice_bench/task.py \
   --model openai/local \
-  -T base_dir=. \
-  --max-connections 1
+  --max-connections 1 \
+  --display plain
 ```
 
 This ensures each sample completes before the next one starts, giving clean per-call
@@ -272,14 +272,52 @@ latency numbers and keeping the inference server healthy.
 
 ---
 
-## 8. `--display=conversation` collapses newlines in the terminal
+## 8. Choosing a `--display` mode
 
-The `inspect eval --display=conversation` output renders message content in fixed-width boxes.
-Multi-line content (e.g. the YAML-formatted entity inventory) is displayed as a single wrapped
-line. The actual prompt sent to the model retains all newlines and indentation — this is purely
-a terminal rendering artefact.
+The `--display` flag controls what Inspect renders to the terminal during a run. The default
+(`full`) uses a rich TUI that requires an interactive terminal. Choose based on context:
 
-To inspect the real prompt content, read the `.eval` log file (it's a zip archive):
+| Mode | Use when |
+|------|----------|
+| `plain` | **Default for most use.** Flat progress lines; works in any terminal and in non-interactive environments (scripts, CI, piped output). |
+| `none` | Automated batch scripts where log files are the only record. Suppresses all terminal output. |
+| `full` | Default if `--display` is omitted. Rich live-updating TUI. Only use in a real interactive terminal. |
+| `conversation` | Debugging prompt content at an interactive terminal — renders each message turn as a text box. |
+
+### Standard interactive run
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display plain
+```
+
+### Automated / orchestration run (Step 18+)
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display none \
+  --no-fail-on-error \
+  --log-dir logs/<config-id> \
+  --tags <model> <quant> <hw> \
+  --metadata model=<model> quant=<quant> hw=<hw> \
+  --seed 42
+```
+
+Key flags for automated runs:
+- `--display none` — no terminal output; log files are the record
+- `--no-fail-on-error` — a single bad sample doesn't abort the matrix run
+- `--log-dir logs/<config-id>` — one directory per model/quant/hardware configuration
+- `--tags` / `--metadata` — attach structured labels to each run for the report generator
+- `--seed` — pin the random seed for reproducibility across configurations
+
+### Debugging prompt content
+
+When you need to inspect the exact system prompt, tool list, or model response, use
+`--display conversation` at a real terminal, or read the `.eval` log directly (it's a zip):
 
 ```python
 import zipfile, json
@@ -287,5 +325,9 @@ with zipfile.ZipFile("logs/my-run.eval") as z:
     sample = json.loads(z.read("samples/<sample-id>.json"))
 print(list(sample["attachments"].values())[0])  # system prompt
 ```
+
+Note: `--display conversation` renders message content in fixed-width terminal boxes. Multi-line
+content (e.g. the YAML entity inventory) appears as one wrapped line — the actual prompt sent to
+the model retains all newlines. The `.eval` log shows the real content.
 
 ---

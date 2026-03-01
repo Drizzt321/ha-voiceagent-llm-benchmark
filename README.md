@@ -21,7 +21,7 @@ ruff check .
 # Run a benchmark eval (see docs/user-setup.md for server setup)
 cp docs/env.example .env
 # Edit .env with your server address
-uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=.
+uv run inspect eval src/ha_voice_bench/task.py --model openai/local --max-connections 1 --display plain
 ```
 
 ## Architecture
@@ -43,7 +43,7 @@ Test Cases (NDJSON) + Inventory (YAML)
 ```
 src/ha_voice_bench/
 ├── dataset.py          # NDJSON loader → Inspect Samples
-├── tools.py            # HA intent ToolDef objects (11 MVP tools)
+├── tools.py            # HA intent ToolDef objects (11 MVP / 31 full)
 ├── prompt.py           # System prompt assembly with entity inventory
 ├── solver.py           # Inspect Solver: wires prompt + tools + generate()
 ├── task.py             # Inspect Task entry point

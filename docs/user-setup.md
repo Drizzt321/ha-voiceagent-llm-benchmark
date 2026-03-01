@@ -73,35 +73,40 @@ The `.env` file is gitignored; never commit it.
 
 ## 4. Run the smoke test
 
-Verify the full pipeline end-to-end with a single sample and verbose tracing:
+Verify the full pipeline end-to-end with a single sample:
 
 ```bash
-uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=. --limit 1 --display=conversation
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display plain \
+  --limit 1
 ```
 
 > **Note:** `inspect` is installed inside the `uv`-managed virtualenv. Prefix commands with
 > `uv run` or activate the venv first (`source .venv/bin/activate`).
 
-**What to check in the trace output:**
-- System message contains entity inventory text
-- Tools array lists all 11 HA intent tools (distinct names, not 11 copies of one tool)
-- Model response contains `tool_calls` (not plain text only)
-- `accuracy` summary shows a real number, no `WARNING Unable to convert value to float`
-- `usage` shows non-zero `prompt_tokens` and `completion_tokens`
+**What to check in the output:**
+- Progress line completes without error
+- `accuracy` summary shows a real number
+- Token counts (`I:` / `O:`) are non-zero
+- Log path is printed at the end
 
-> **Display note:** `--display=conversation` renders message content in fixed-width terminal
-> boxes. The YAML entity inventory will appear as one wrapped line — the actual prompt sent to
-> the model has full newlines and indentation. To inspect the real prompt, read the `.eval` log
-> (see `docs/gotchas_learnings.md` §8).
+To inspect the conversation in detail (system prompt, tool list, model response), open the log
+in the Inspect viewer or read the `.eval` log file directly
+(see `docs/gotchas_learnings.md` §8).
 
 ---
 
 ## 5. Run the full benchmark
 
-Once the smoke test passes, run against the full 25-case test set:
+Once the smoke test passes, run against the full test set:
 
 ```bash
-uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=. --max-connections 1
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display plain
 ```
 
 > **Important:** Always use `--max-connections 1` for benchmarking. Inspect runs samples
@@ -113,4 +118,31 @@ Browse results in the Inspect viewer:
 
 ```bash
 uv run inspect view
+```
+
+---
+
+## Display options
+
+The `--display` flag controls what Inspect renders to the terminal during a run:
+
+| Value | When to use |
+|-------|-------------|
+| `plain` | **Default for most use.** Flat progress lines, no rich rendering. Works in any terminal and in scripts/automation. |
+| `full` | Default if `--display` is omitted. Rich TUI with live updating panels. Use only in an interactive terminal. |
+| `conversation` | Shows each message turn rendered as text boxes. Useful for debugging prompt content at a real terminal. |
+| `none` | Suppresses all terminal output. Use in automated batch scripts where log files are the only record. |
+
+For **automated/scripted runs** (e.g. the matrix orchestration in Step 18), use `--display none`
+combined with `--no-fail-on-error` and a run-specific `--log-dir`:
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  --max-connections 1 \
+  --display none \
+  --no-fail-on-error \
+  --log-dir logs/my-run \
+  --tags qwen2.5-7b q4_k_m gpu \
+  --seed 42
 ```
