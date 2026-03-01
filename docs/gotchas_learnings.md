@@ -246,7 +246,33 @@ return Score(
 
 ---
 
-## 7. `--display=conversation` collapses newlines in the terminal
+## 7. Always run evaluations serially (`--max-connections 1`)
+
+**Context:** benchmark methodology
+
+By default, Inspect evaluates samples concurrently — multiple model API requests are in
+flight simultaneously. This is efficient for throughput but wrong for benchmarking:
+
+- **Latency measurements are skewed** — requests queue behind each other on the server,
+  so measured latency reflects queue depth rather than actual single-call inference time.
+- **The llama.cpp server can be overwhelmed** — with many concurrent long-context requests
+  (e.g. 31 tools in the prompt), the server may stall or time out.
+
+Always pass `--max-connections 1` to enforce serial execution:
+
+```bash
+uv run inspect eval src/ha_voice_bench/task.py \
+  --model openai/local \
+  -T base_dir=. \
+  --max-connections 1
+```
+
+This ensures each sample completes before the next one starts, giving clean per-call
+latency numbers and keeping the inference server healthy.
+
+---
+
+## 8. `--display=conversation` collapses newlines in the terminal
 
 The `inspect eval --display=conversation` output renders message content in fixed-width boxes.
 Multi-line content (e.g. the YAML-formatted entity inventory) is displayed as a single wrapped

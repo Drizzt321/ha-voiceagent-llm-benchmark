@@ -9,6 +9,10 @@ Tool inventory sourced from:
 
 Note: parameters are passed as ToolParams (not plain dicts) so ToolDef skips
 function-signature introspection — required because _noop uses **kwargs.
+
+Tiers:
+  mvp  — 7 core + 4 utility = 11 tools  (Milestone 1)
+  full — mvp + Tier 2 media (9) + Tier 3 household (9) + Tier 5 utility (2) = 31 tools
 """
 
 from inspect_ai.tool import ToolDef
@@ -184,6 +188,242 @@ HASS_NEVERMIND = ToolDef(
 )
 
 
+# --- Tier 2: Media Control ---
+
+_MEDIA_SLOTS = ToolParams(
+    properties={
+        "name": _str("Name of the media player"),
+        "area": _str("Name of the area"),
+    }
+)
+
+HASS_MEDIA_PAUSE = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaPause",
+    description="Pauses a media player",
+    parameters=_MEDIA_SLOTS,
+)
+
+HASS_MEDIA_UNPAUSE = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaUnpause",
+    description="Unpauses a media player",
+    parameters=_MEDIA_SLOTS,
+)
+
+HASS_MEDIA_NEXT = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaNext",
+    description="Skips to the next item on a media player",
+    parameters=_MEDIA_SLOTS,
+)
+
+HASS_MEDIA_PREVIOUS = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaPrevious",
+    description="Skips to the previous item on a media player",
+    parameters=_MEDIA_SLOTS,
+)
+
+HASS_SET_VOLUME = ToolDef(
+    tool=_make_noop(),
+    name="HassSetVolume",
+    description="Sets the volume of a media player",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the media player"),
+            "area": _str("Name of the area"),
+            "volume_level": _int("Volume level from 0 to 100"),
+        }
+    ),
+)
+
+HASS_MEDIA_PLAYER_MUTE = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaPlayerMute",
+    description="Mutes a media player",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the media player"),
+        }
+    ),
+)
+
+HASS_MEDIA_PLAYER_UNMUTE = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaPlayerUnmute",
+    description="Unmutes a media player",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the media player"),
+        }
+    ),
+)
+
+HASS_SET_VOLUME_RELATIVE = ToolDef(
+    tool=_make_noop(),
+    name="HassSetVolumeRelative",
+    description="Increases or decreases the volume of a media player",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the media player"),
+            "area": _str("Name of the area"),
+            "floor": _str("Name of the floor"),
+            "volume_step": _int("Volume step from -100 to 100 (negative to decrease)"),
+        }
+    ),
+)
+
+HASS_MEDIA_SEARCH_AND_PLAY = ToolDef(
+    tool=_make_noop(),
+    name="HassMediaSearchAndPlay",
+    description="Searches for and plays media on a media player",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the media player"),
+            "area": _str("Name of the area"),
+            "search_query": _str("Search query for the media to play"),
+            "media_class": _str("Type of media (album, artist, track, playlist, etc.)"),
+        }
+    ),
+)
+
+
+# --- Tier 3: Household ---
+
+HASS_FAN_SET_SPEED = ToolDef(
+    tool=_make_noop(),
+    name="HassFanSetSpeed",
+    description="Sets the speed of a fan",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the fan"),
+            "area": _str("Name of the area"),
+            "floor": _str("Name of the floor"),
+            "percentage": _int("Fan speed percentage from 0 to 100"),
+        }
+    ),
+)
+
+HASS_VACUUM_START = ToolDef(
+    tool=_make_noop(),
+    name="HassVacuumStart",
+    description="Starts a vacuum cleaner",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the vacuum"),
+            "area": _str("Name of the area"),
+            "floor": _str("Name of the floor"),
+        }
+    ),
+)
+
+HASS_VACUUM_RETURN_TO_BASE = ToolDef(
+    tool=_make_noop(),
+    name="HassVacuumReturnToBase",
+    description="Returns a vacuum cleaner to its base",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the vacuum"),
+            "area": _str("Name of the area"),
+        }
+    ),
+)
+
+HASS_LAWN_MOWER_START_MOWING = ToolDef(
+    tool=_make_noop(),
+    name="HassLawnMowerStartMowing",
+    description="Starts a lawn mower",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the lawn mower"),
+        }
+    ),
+)
+
+HASS_LAWN_MOWER_DOCK = ToolDef(
+    tool=_make_noop(),
+    name="HassLawnMowerDock",
+    description="Sends a lawn mower to its dock",
+    parameters=ToolParams(
+        properties={
+            "name": _str("Name of the lawn mower"),
+        }
+    ),
+)
+
+HASS_LIST_ADD_ITEM = ToolDef(
+    tool=_make_noop(),
+    name="HassListAddItem",
+    description="Adds an item to a todo list",
+    parameters=ToolParams(
+        properties={
+            "item": _str("The item to add to the list"),
+            "name": _str("Name of the todo list"),
+        }
+    ),
+)
+
+HASS_LIST_COMPLETE_ITEM = ToolDef(
+    tool=_make_noop(),
+    name="HassListCompleteItem",
+    description="Checks off an item on a todo list",
+    parameters=ToolParams(
+        properties={
+            "item": _str("The item to check off"),
+            "name": _str("Name of the todo list"),
+        }
+    ),
+)
+
+HASS_SHOPPING_LIST_ADD_ITEM = ToolDef(
+    tool=_make_noop(),
+    name="HassShoppingListAddItem",
+    description="Adds an item to the shopping list",
+    parameters=ToolParams(
+        properties={
+            "item": _str("The item to add to the shopping list"),
+        }
+    ),
+)
+
+HASS_SHOPPING_LIST_COMPLETE_ITEM = ToolDef(
+    tool=_make_noop(),
+    name="HassShoppingListCompleteItem",
+    description="Checks off an item on the shopping list",
+    parameters=ToolParams(
+        properties={
+            "item": _str("The item to check off"),
+        }
+    ),
+)
+
+
+# --- Tier 5: Additional Utility ---
+
+HASS_RESPOND = ToolDef(
+    tool=_make_noop(),
+    name="HassRespond",
+    description="Returns a response to the user without taking any action",
+    parameters=ToolParams(
+        properties={
+            "response": _str("The response text to return"),
+        }
+    ),
+)
+
+HASS_BROADCAST = ToolDef(
+    tool=_make_noop(),
+    name="HassBroadcast",
+    description="Announces a message on other voice satellites",
+    parameters=ToolParams(
+        properties={
+            "message": _str("The message to broadcast"),
+        }
+    ),
+)
+
+
 # --- Public API ---
 
 MVP_TOOLS = [
@@ -200,13 +440,41 @@ MVP_TOOLS = [
     HASS_NEVERMIND,
 ]
 
+FULL_TOOLS = MVP_TOOLS + [
+    # Tier 2: Media
+    HASS_MEDIA_PAUSE,
+    HASS_MEDIA_UNPAUSE,
+    HASS_MEDIA_NEXT,
+    HASS_MEDIA_PREVIOUS,
+    HASS_SET_VOLUME,
+    HASS_MEDIA_PLAYER_MUTE,
+    HASS_MEDIA_PLAYER_UNMUTE,
+    HASS_SET_VOLUME_RELATIVE,
+    HASS_MEDIA_SEARCH_AND_PLAY,
+    # Tier 3: Household
+    HASS_FAN_SET_SPEED,
+    HASS_VACUUM_START,
+    HASS_VACUUM_RETURN_TO_BASE,
+    HASS_LAWN_MOWER_START_MOWING,
+    HASS_LAWN_MOWER_DOCK,
+    HASS_LIST_ADD_ITEM,
+    HASS_LIST_COMPLETE_ITEM,
+    HASS_SHOPPING_LIST_ADD_ITEM,
+    HASS_SHOPPING_LIST_COMPLETE_ITEM,
+    # Tier 5: Additional utility
+    HASS_RESPOND,
+    HASS_BROADCAST,
+]
+
 
 def get_ha_intent_tools(tier: str = "mvp") -> list[ToolDef]:
     """Return HA intent tools for the benchmarking eval.
 
     Args:
-        tier: Which tool set — 'mvp' (11 tools) or 'full' (added in Milestone 2).
+        tier: Which tool set — 'mvp' (11 tools) or 'full' (31 tools).
     """
     if tier == "mvp":
         return list(MVP_TOOLS)
+    if tier == "full":
+        return list(FULL_TOOLS)
     raise ValueError(f"Unknown tool tier: {tier}")

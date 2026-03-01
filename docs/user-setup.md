@@ -92,7 +92,7 @@ uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=
 > **Display note:** `--display=conversation` renders message content in fixed-width terminal
 > boxes. The YAML entity inventory will appear as one wrapped line — the actual prompt sent to
 > the model has full newlines and indentation. To inspect the real prompt, read the `.eval` log
-> (see `docs/gotchas_learnings.md` §7).
+> (see `docs/gotchas_learnings.md` §8).
 
 ---
 
@@ -101,8 +101,13 @@ uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=
 Once the smoke test passes, run against the full 25-case test set:
 
 ```bash
-uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=.
+uv run inspect eval src/ha_voice_bench/task.py --model openai/local -T base_dir=. --max-connections 1
 ```
+
+> **Important:** Always use `--max-connections 1` for benchmarking. Inspect runs samples
+> concurrently by default, which skews per-call latency measurements and can overwhelm a local
+> inference server. Serial execution gives clean, comparable timing numbers across models.
+> See `docs/gotchas_learnings.md` §7 for details.
 
 Browse results in the Inspect viewer:
 
