@@ -1,0 +1,63 @@
+areas:
+  # --- First Floor (10 areas) ---
+  - name: Kitchen
+    id: kitchen
+
+  - name: Dining Room
+    id: dining_room
+
+  - name: Living Room
+    id: living_room
+
+  - name: Entry
+    id: entry
+
+  - name: Mudroom
+    id: mudroom
+
+  - name: Hallway
+    id: hallway
+
+  - name: Office
+    id: office
+
+  - name: Laundry Room
+    id: laundry_room
+
+  - name: Bathroom
+    id: bathroom
+
+  - name: Garage
+    id: garage
+
+  # --- Second Floor (7 areas) ---
+  - name: Master Bedroom
+    id: master_bedroom
+
+  - name: Master Bathroom
+    id: master_bathroom
+
+  - name: Bedroom
+    id: bedroom
+
+  - name: Guest Bedroom
+    id: guest_bedroom
+
+  - name: Nursery
+    id: nursery
+
+  - name: Upstairs Hallway
+    id: upstairs_hallway
+
+  - name: Upstairs Bathroom
+    id: upstairs_bathroom
+
+  # --- Outdoor (3 areas) ---
+  - name: Patio
+    id: patio
+
+  - name: Front Yard
+    id: front_yard
+
+  - name: Back Yard
+    id: back_yard

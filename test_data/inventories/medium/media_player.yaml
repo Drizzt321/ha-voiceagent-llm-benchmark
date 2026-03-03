@@ -1,0 +1,61 @@
+entities:
+  - entity_id: media_player.living_room_tv
+    name: Living Room TV
+    area: living_room
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 458751
+      source_list:
+        - HDMI 1
+        - HDMI 2
+        - Netflix
+        - YouTube
+        - Disney+
+      sound_mode_list:
+        - Standard
+        - Movie
+        - Music
+        - Sports
+
+  - entity_id: media_player.living_room_soundbar
+    name: Living Room Soundbar
+    area: living_room
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 21517
+      source_list:
+        - HDMI ARC
+        - Optical
+        - Bluetooth
+        - Streaming
+      sound_mode_list:
+        - Standard
+        - Movie
+        - Music
+        - Night
+
+  # --- Kitchen ---
+  - entity_id: media_player.office_pc_speakers
+    name: Office PC Speakers
+    area: office
+    domain: media_player
+    state: paused
+    attributes:
+      supported_features: 21517
+
+  # --- Bathroom (brand-name identifier: Sonos) ---
+  - entity_id: media_player.bedroom_echo
+    name: Bedroom Echo
+    area: bedroom
+    domain: media_player
+    state: "on"
+    attributes:
+      supported_features: 21388
+      source_list:
+        - Spotify
+        - Amazon Music
+        - TuneIn
+
+  # --- Nursery ---

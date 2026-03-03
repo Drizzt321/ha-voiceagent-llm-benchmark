@@ -1,0 +1,18 @@
+entities:
+  - entity_id: valve.water_main
+    name: Water Main Shutoff
+    area: garage
+    domain: valve
+    state: open
+    attributes:
+      device_class: water
+      supported_features: 1
+
+  - entity_id: valve.gas_main
+    name: Gas Main Shutoff
+    area: garage
+    domain: valve
+    state: closed
+    attributes:
+      device_class: gas
+      supported_features: 1

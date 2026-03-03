@@ -1,0 +1,29 @@
+entities:
+  # --- Todo (3 entities) ---
+  # State is the integer count of incomplete items.
+  # Tests HassListAddItem routing and "add to list" intent disambiguation.
+  # No area assignment — todo lists are conceptually portable.
+
+  - entity_id: todo.shopping_list
+    name: Shopping List
+    area: null
+    domain: todo
+    state: "3"
+    attributes:
+      supported_features: 7
+
+  - entity_id: todo.household_tasks
+    name: Household Tasks
+    area: null
+    domain: todo
+    state: "7"
+    attributes:
+      supported_features: 7
+
+  - entity_id: todo.grocery_list
+    name: Grocery List
+    area: null
+    domain: todo
+    state: "0"
+    attributes:
+      supported_features: 7

@@ -1,0 +1,8 @@
+entities:
+  - entity_id: lawn_mower.front_yard_mower
+    name: Front Yard Robot Mower
+    area: front_yard
+    domain: lawn_mower
+    state: docked
+    attributes:
+      supported_features: 7

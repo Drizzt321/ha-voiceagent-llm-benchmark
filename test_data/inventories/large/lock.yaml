@@ -1,0 +1,48 @@
+entities:
+  - entity_id: lock.front_door_lock
+    name: Front Door Lock
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.front_door_deadbolt
+    name: Front Door Deadbolt
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.garage_entry_door_lock
+    name: Garage Entry Door Lock
+    area: garage
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.office_door_lock
+    name: Office Door Lock
+    area: office
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.back_gate_lock
+    name: Back Gate Lock
+    area: back_yard
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.mailbox_lock
+    name: Mailbox Lock
+    area: front_yard
+    domain: lock
+    state: jammed
+    attributes:
+      supported_features: 0

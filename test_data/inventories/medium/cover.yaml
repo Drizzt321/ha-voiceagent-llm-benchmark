@@ -1,0 +1,47 @@
+entities:
+  - entity_id: cover.garage_door
+    name: Garage Door
+    area: garage
+    domain: cover
+    state: closed
+    attributes:
+      device_class: garage
+      supported_features: 11
+
+  - entity_id: cover.living_room_blinds
+    name: Living Room Blinds
+    area: living_room
+    domain: cover
+    state: open
+    attributes:
+      device_class: blind
+      supported_features: 255
+
+  - entity_id: cover.bedroom_shade
+    name: Bedroom Blackout Shade
+    area: bedroom
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  - entity_id: cover.kitchen_shade
+    name: Kitchen Window Shade
+    area: kitchen
+    domain: cover
+    state: open
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  - entity_id: cover.office_standing_desk
+    name: Office Standing Desk
+    area: office
+    domain: cover
+    state: open
+    attributes:
+      supported_features: 12
+
+  # Pet door: creates triple disambiguation with lock.mudroom_door_lock and
+  # binary_sensor.mudroom_door_contact in the same area.

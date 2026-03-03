@@ -1,0 +1,991 @@
+entities:
+  # --- Sensor (89 entities) ---
+  # Most heterogeneous domain. Distribution per design principles:
+  #   - temperature: 20+ (cheap Zigbee sensors everywhere, in °F except 3D printer in °C)
+  #   - battery: 17+ (every wireless device)
+  #   - humidity: 14+
+  #   - power: 9+
+  #   - moisture: 6 (soil moisture, companions to irrigation zones)
+  #   - illuminance: 5+
+  #   - energy: 4+
+  #   - carbon_dioxide: 2
+  #   - data_rate: 2
+  #   - duration: 2 (washer/dryer cycle remaining)
+  #   - long-tail one-offs: atmospheric_pressure, uv_index, wind_speed, sound_pressure, ph, signal_strength
+  #
+  # Meta-state: sensor.garage_temperature → state: unavailable (offline device)
+  #
+  # Tech hub (office) has 5 temperature sensors: room, server rack, 3D printer nozzle,
+  # 3D printer bed, aquarium water. Creates hardest disambiguation challenge.
+  # 3D printer temps in °C while all room temps in °F (unit system mixing).
+  #
+  # Companion groups:
+  #   - 3D printer: switch.3d_printer + sensor.3d_printer_nozzle_temp + sensor.3d_printer_bed_temp + sensor.3d_printer_progress
+  #   - Aquarium: switch.aquarium_pump + switch.aquarium_heater + light.aquarium_light + sensor.aquarium_water_temperature + sensor.aquarium_ph
+  #   - Washer: binary_sensor.washer_running + sensor.washer_cycle_remaining + sensor.washer_power
+  #   - Dryer: binary_sensor.dryer_running + sensor.dryer_cycle_remaining + sensor.dryer_power
+  #   - EV charger: switch.ev_charger + binary_sensor.ev_charger_connected + sensor.ev_charger_energy + sensor.ev_charger_power
+  #   - UPS: sensor.ups_battery_level + sensor.ups_load
+
+  # =========================================================
+  # KITCHEN
+  # =========================================================
+  - entity_id: sensor.kitchen_temperature
+    name: Kitchen Temperature
+    area: kitchen
+    domain: sensor
+    state: "72.1"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.kitchen_humidity
+    name: Kitchen Humidity
+    area: kitchen
+    domain: sensor
+    state: "48"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.kitchen_co2
+    name: Kitchen CO2
+    area: kitchen
+    domain: sensor
+    state: "612"
+    attributes:
+      device_class: carbon_dioxide
+      state_class: measurement
+      unit_of_measurement: ppm
+
+  - entity_id: sensor.smart_plug_1_power
+    name: Smart Plug 1 Power
+    area: kitchen
+    domain: sensor
+    state: "34.2"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  - entity_id: sensor.smart_plug_1_energy
+    name: Smart Plug 1 Energy
+    area: kitchen
+    domain: sensor
+    state: "12.7"
+    attributes:
+      device_class: energy
+      state_class: total_increasing
+      unit_of_measurement: kWh
+
+  # =========================================================
+  # LIVING ROOM
+  # =========================================================
+  - entity_id: sensor.living_room_temperature
+    name: Living Room Temperature
+    area: living_room
+    domain: sensor
+    state: "71.4"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.living_room_humidity
+    name: Living Room Humidity
+    area: living_room
+    domain: sensor
+    state: "46"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.living_room_illuminance
+    name: Living Room Illuminance
+    area: living_room
+    domain: sensor
+    state: "420"
+    attributes:
+      device_class: illuminance
+      state_class: measurement
+      unit_of_measurement: lx
+
+  - entity_id: sensor.living_room_tv_power
+    name: Living Room TV Power
+    area: living_room
+    domain: sensor
+    state: "87.5"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  # =========================================================
+  # OFFICE (tech hub — 5 temperature sensors)
+  # =========================================================
+  - entity_id: sensor.office_temperature
+    name: Office Temperature
+    area: office
+    domain: sensor
+    state: "70.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.server_rack_temperature
+    name: Server Rack Temperature
+    area: office
+    domain: sensor
+    state: "95.3"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  # 3D printer temps in °C (industry standard), while all room temps are in °F.
+  # Creates unit system mixing — "what's the temperature in the office?" returns mixed units.
+  - entity_id: sensor.3d_printer_nozzle_temp
+    name: 3D Printer Nozzle Temperature
+    area: office
+    domain: sensor
+    state: "215"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°C"
+
+  - entity_id: sensor.3d_printer_bed_temp
+    name: 3D Printer Bed Temperature
+    area: office
+    domain: sensor
+    state: "60"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°C"
+
+  # No device_class — unusual sensor type tests LLM generalization.
+  - entity_id: sensor.3d_printer_progress
+    name: 3D Printer Progress
+    area: office
+    domain: sensor
+    state: "43"
+    attributes:
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.aquarium_water_temperature
+    name: Aquarium Water Temperature
+    area: office
+    domain: sensor
+    state: "78.4"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.office_humidity
+    name: Office Humidity
+    area: office
+    domain: sensor
+    state: "42"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # UPS companion group — battery competes with all Zigbee battery sensors.
+  - entity_id: sensor.ups_battery_level
+    name: UPS Battery Level
+    area: office
+    domain: sensor
+    state: "98"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.ups_load
+    name: UPS Load
+    area: office
+    domain: sensor
+    state: "245"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  # Aquarium pH — unusual sensor type, tests whether LLM handles unfamiliar device_class.
+  - entity_id: sensor.aquarium_ph
+    name: Aquarium pH
+    area: office
+    domain: sensor
+    state: "7.2"
+    attributes:
+      device_class: ph
+      state_class: measurement
+
+  # =========================================================
+  # DINING ROOM
+  # =========================================================
+  - entity_id: sensor.dining_room_temperature
+    name: Dining Room Temperature
+    area: dining_room
+    domain: sensor
+    state: "71.0"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.dining_room_humidity
+    name: Dining Room Humidity
+    area: dining_room
+    domain: sensor
+    state: "47"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # ENTRY
+  # =========================================================
+  - entity_id: sensor.entry_temperature
+    name: Entry Temperature
+    area: entry
+    domain: sensor
+    state: "68.5"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  # =========================================================
+  # MUDROOM
+  # =========================================================
+  - entity_id: sensor.mudroom_temperature
+    name: Mudroom Temperature
+    area: mudroom
+    domain: sensor
+    state: "65.2"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  # =========================================================
+  # HALLWAY
+  # =========================================================
+  - entity_id: sensor.hallway_smoke_detector_battery
+    name: Hallway Smoke Detector Battery
+    area: hallway
+    domain: sensor
+    state: "85"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # LAUNDRY ROOM
+  # Washer/dryer companion groups with cycle timers and power sensors.
+  # =========================================================
+  - entity_id: sensor.washer_cycle_remaining
+    name: Washer Cycle Remaining
+    area: laundry_room
+    domain: sensor
+    state: "22"
+    attributes:
+      device_class: duration
+      state_class: measurement
+      unit_of_measurement: min
+
+  - entity_id: sensor.washer_power
+    name: Washer Power
+    area: laundry_room
+    domain: sensor
+    state: "480"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  - entity_id: sensor.dryer_cycle_remaining
+    name: Dryer Cycle Remaining
+    area: laundry_room
+    domain: sensor
+    state: "0"
+    attributes:
+      device_class: duration
+      state_class: measurement
+      unit_of_measurement: min
+
+  - entity_id: sensor.dryer_power
+    name: Dryer Power
+    area: laundry_room
+    domain: sensor
+    state: "8.1"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  # =========================================================
+  # BATHROOM
+  # =========================================================
+  - entity_id: sensor.bathroom_temperature
+    name: Bathroom Temperature
+    area: bathroom
+    domain: sensor
+    state: "73.5"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.bathroom_humidity
+    name: Bathroom Humidity
+    area: bathroom
+    domain: sensor
+    state: "62"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # GARAGE
+  # Meta-state: unavailable (offline sensor — graceful degradation scenario 6).
+  # =========================================================
+  - entity_id: sensor.garage_temperature
+    name: Garage Temperature
+    area: garage
+    domain: sensor
+    state: unavailable
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.garage_humidity
+    name: Garage Humidity
+    area: garage
+    domain: sensor
+    state: "55"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.ev_charger_energy
+    name: EV Charger Energy
+    area: garage
+    domain: sensor
+    state: "287.4"
+    attributes:
+      device_class: energy
+      state_class: total_increasing
+      unit_of_measurement: kWh
+
+  - entity_id: sensor.ev_charger_power
+    name: EV Charger Power
+    area: garage
+    domain: sensor
+    state: "7200"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  # =========================================================
+  # MASTER BEDROOM
+  # =========================================================
+  - entity_id: sensor.master_bedroom_temperature
+    name: Master Bedroom Temperature
+    area: master_bedroom
+    domain: sensor
+    state: "69.3"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.master_bedroom_humidity
+    name: Master Bedroom Humidity
+    area: master_bedroom
+    domain: sensor
+    state: "45"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.master_bedroom_illuminance
+    name: Master Bedroom Illuminance
+    area: master_bedroom
+    domain: sensor
+    state: "12"
+    attributes:
+      device_class: illuminance
+      state_class: measurement
+      unit_of_measurement: lx
+
+  # =========================================================
+  # MASTER BATHROOM
+  # =========================================================
+  - entity_id: sensor.master_bathroom_temperature
+    name: Master Bathroom Temperature
+    area: master_bathroom
+    domain: sensor
+    state: "74.1"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.master_bathroom_humidity
+    name: Master Bathroom Humidity
+    area: master_bathroom
+    domain: sensor
+    state: "58"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # BEDROOM
+  # =========================================================
+  - entity_id: sensor.bedroom_temperature
+    name: Bedroom Temperature
+    area: bedroom
+    domain: sensor
+    state: "70.0"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.bedroom_humidity
+    name: Bedroom Humidity
+    area: bedroom
+    domain: sensor
+    state: "47"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.bedroom_co2
+    name: Bedroom CO2
+    area: bedroom
+    domain: sensor
+    state: "724"
+    attributes:
+      device_class: carbon_dioxide
+      state_class: measurement
+      unit_of_measurement: ppm
+
+  # =========================================================
+  # NURSERY
+  # =========================================================
+  - entity_id: sensor.nursery_temperature
+    name: Nursery Temperature
+    area: nursery
+    domain: sensor
+    state: "72.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.nursery_humidity
+    name: Nursery Humidity
+    area: nursery
+    domain: sensor
+    state: "52"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.nursery_sound_level
+    name: Nursery Sound Level
+    area: nursery
+    domain: sensor
+    state: "34.2"
+    attributes:
+      device_class: sound_pressure
+      state_class: measurement
+      unit_of_measurement: dB
+
+  # =========================================================
+  # GUEST BEDROOM
+  # =========================================================
+  - entity_id: sensor.guest_bedroom_temperature
+    name: Guest Bedroom Temperature
+    area: guest_bedroom
+    domain: sensor
+    state: "68.7"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.guest_bedroom_humidity
+    name: Guest Bedroom Humidity
+    area: guest_bedroom
+    domain: sensor
+    state: "44"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # UPSTAIRS HALLWAY
+  # =========================================================
+  - entity_id: sensor.upstairs_smoke_detector_battery
+    name: Upstairs Smoke Detector Battery
+    area: upstairs_hallway
+    domain: sensor
+    state: "72"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # UPSTAIRS BATHROOM
+  # =========================================================
+  - entity_id: sensor.upstairs_bathroom_temperature
+    name: Upstairs Bathroom Temperature
+    area: upstairs_bathroom
+    domain: sensor
+    state: "72.9"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.upstairs_bathroom_humidity
+    name: Upstairs Bathroom Humidity
+    area: upstairs_bathroom
+    domain: sensor
+    state: "61"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # =========================================================
+  # FRONT YARD (soil moisture + illuminance)
+  # =========================================================
+  - entity_id: sensor.front_yard_soil_moisture_1
+    name: Front Yard Soil Moisture 1
+    area: front_yard
+    domain: sensor
+    state: "38"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.front_yard_soil_moisture_2
+    name: Front Yard Soil Moisture 2
+    area: front_yard
+    domain: sensor
+    state: "41"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.front_yard_soil_moisture_3
+    name: Front Yard Soil Moisture 3
+    area: front_yard
+    domain: sensor
+    state: "35"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.front_yard_illuminance
+    name: Front Yard Illuminance
+    area: front_yard
+    domain: sensor
+    state: "28400"
+    attributes:
+      device_class: illuminance
+      state_class: measurement
+      unit_of_measurement: lx
+
+  # =========================================================
+  # BACK YARD (soil moisture, weather station, pool)
+  # =========================================================
+  - entity_id: sensor.back_yard_soil_moisture_1
+    name: Back Yard Soil Moisture 1
+    area: back_yard
+    domain: sensor
+    state: "44"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_yard_soil_moisture_2
+    name: Back Yard Soil Moisture 2
+    area: back_yard
+    domain: sensor
+    state: "40"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_yard_soil_moisture_3
+    name: Back Yard Soil Moisture 3
+    area: back_yard
+    domain: sensor
+    state: "37"
+    attributes:
+      device_class: moisture
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_yard_temperature
+    name: Back Yard Temperature
+    area: back_yard
+    domain: sensor
+    state: "64.5"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.back_yard_humidity
+    name: Back Yard Humidity
+    area: back_yard
+    domain: sensor
+    state: "58"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_yard_wind_speed
+    name: Back Yard Wind Speed
+    area: back_yard
+    domain: sensor
+    state: "8.3"
+    attributes:
+      device_class: wind_speed
+      state_class: measurement
+      unit_of_measurement: mph
+
+  - entity_id: sensor.back_yard_uv_index
+    name: Back Yard UV Index
+    area: back_yard
+    domain: sensor
+    state: "4.2"
+    attributes:
+      device_class: irradiance
+      state_class: measurement
+      unit_of_measurement: UV index
+
+  - entity_id: sensor.pool_water_temperature
+    name: Pool Water Temperature
+    area: back_yard
+    domain: sensor
+    state: "82.0"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.pool_pump_power
+    name: Pool Pump Power
+    area: back_yard
+    domain: sensor
+    state: "920"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  # =========================================================
+  # PATIO
+  # =========================================================
+  - entity_id: sensor.patio_temperature
+    name: Patio Temperature
+    area: patio
+    domain: sensor
+    state: "63.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.patio_illuminance
+    name: Patio Illuminance
+    area: patio
+    domain: sensor
+    state: "8200"
+    attributes:
+      device_class: illuminance
+      state_class: measurement
+      unit_of_measurement: lx
+
+  # =========================================================
+  # NULL AREA — battery sensors for wireless devices,
+  # whole-home monitoring, internet speeds, long-tail types
+  # =========================================================
+  - entity_id: sensor.front_door_lock_battery
+    name: Front Door Lock Battery
+    area: null
+    domain: sensor
+    state: "62"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_door_lock_battery
+    name: Back Door Lock Battery
+    area: null
+    domain: sensor
+    state: "88"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.hallway_motion_battery
+    name: Hallway Motion Sensor Battery
+    area: null
+    domain: sensor
+    state: "74"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.upstairs_motion_battery
+    name: Upstairs Motion Sensor Battery
+    area: null
+    domain: sensor
+    state: "91"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.back_door_contact_battery
+    name: Back Door Contact Battery
+    area: null
+    domain: sensor
+    state: "55"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.front_door_contact_battery
+    name: Front Door Contact Battery
+    area: null
+    domain: sensor
+    state: "79"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.living_room_motion_battery
+    name: Living Room Motion Sensor Battery
+    area: null
+    domain: sensor
+    state: "43"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.office_motion_battery
+    name: Office Motion Sensor Battery
+    area: null
+    domain: sensor
+    state: "67"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.garage_door_sensor_battery
+    name: Garage Door Sensor Battery
+    area: null
+    domain: sensor
+    state: "81"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.master_bedroom_sensor_battery
+    name: Master Bedroom Sensor Battery
+    area: null
+    domain: sensor
+    state: "93"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.nursery_sensor_battery
+    name: Nursery Sensor Battery
+    area: null
+    domain: sensor
+    state: "58"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.smoke_detector_battery_main
+    name: Kitchen Smoke Detector Battery
+    area: null
+    domain: sensor
+    state: "95"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.internet_download_speed
+    name: Internet Download Speed
+    area: null
+    domain: sensor
+    state: "847.3"
+    attributes:
+      device_class: data_rate
+      state_class: measurement
+      unit_of_measurement: Mbit/s
+
+  - entity_id: sensor.internet_upload_speed
+    name: Internet Upload Speed
+    area: null
+    domain: sensor
+    state: "412.1"
+    attributes:
+      device_class: data_rate
+      state_class: measurement
+      unit_of_measurement: Mbit/s
+
+  - entity_id: sensor.atmospheric_pressure
+    name: Atmospheric Pressure
+    area: null
+    domain: sensor
+    state: "1013.2"
+    attributes:
+      device_class: atmospheric_pressure
+      state_class: measurement
+      unit_of_measurement: hPa
+
+  - entity_id: sensor.home_total_power
+    name: Home Total Power
+    area: null
+    domain: sensor
+    state: "3847"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  - entity_id: sensor.home_total_energy
+    name: Home Total Energy Today
+    area: null
+    domain: sensor
+    state: "18.4"
+    attributes:
+      device_class: energy
+      state_class: total_increasing
+      unit_of_measurement: kWh
+
+  - entity_id: sensor.solar_panel_power
+    name: Solar Panel Power
+    area: null
+    domain: sensor
+    state: "2340"
+    attributes:
+      device_class: power
+      state_class: measurement
+      unit_of_measurement: W
+
+  - entity_id: sensor.solar_panel_energy
+    name: Solar Panel Energy Today
+    area: null
+    domain: sensor
+    state: "8.1"
+    attributes:
+      device_class: energy
+      state_class: total_increasing
+      unit_of_measurement: kWh
+
+  # =========================================================
+  # ADDITIONAL (to reach 89)
+  # =========================================================
+  - entity_id: sensor.office_illuminance
+    name: Office Illuminance
+    area: office
+    domain: sensor
+    state: "380"
+    attributes:
+      device_class: illuminance
+      state_class: measurement
+      unit_of_measurement: lx
+
+  - entity_id: sensor.hallway_temperature
+    name: Hallway Temperature
+    area: hallway
+    domain: sensor
+    state: "69.2"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.upstairs_hallway_temperature
+    name: Upstairs Hallway Temperature
+    area: upstairs_hallway
+    domain: sensor
+    state: "70.4"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.laundry_room_temperature
+    name: Laundry Room Temperature
+    area: laundry_room
+    domain: sensor
+    state: "67.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  # Main electrical panel voltage — unusual long-tail sensor type.
+  - entity_id: sensor.main_panel_voltage
+    name: Main Panel Voltage
+    area: null
+    domain: sensor
+    state: "121.4"
+    attributes:
+      device_class: voltage
+      state_class: measurement
+      unit_of_measurement: V

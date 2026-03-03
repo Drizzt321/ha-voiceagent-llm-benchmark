@@ -1,0 +1,154 @@
+entities:
+  # --- Fan (14 entities) ---
+  # Capability spectrum tests whether the LLM correctly avoids sending speed/direction
+  # commands to exhaust fans that only support on/off.
+  #
+  # supported_features bitmask:
+  #   SET_SPEED=1, OSCILLATE=2, DIRECTION=4, PRESET_MODE=8
+  # Exhaust (on/off only): 0
+  # Ceiling fan (speed + direction): 5
+  # Smart fan (speed + oscillation + direction): 7
+  # Full smart fan (speed + oscillation + direction + presets): 15
+
+  # --- Exhaust fans (on/off only, no speed control) ---
+  - entity_id: fan.bathroom_exhaust
+    name: Bathroom Exhaust Fan
+    area: bathroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.master_bathroom_exhaust
+    name: Master Bathroom Exhaust Fan
+    area: master_bathroom
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.upstairs_bathroom_exhaust
+    name: Upstairs Bathroom Exhaust Fan
+    area: upstairs_bathroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.laundry_room_exhaust
+    name: Laundry Room Exhaust Fan
+    area: laundry_room
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.garage_exhaust
+    name: Garage Exhaust Fan
+    area: garage
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 0
+
+  # --- Ceiling fans (speed + direction) ---
+  - entity_id: fan.living_room_ceiling_fan
+    name: Living Room Ceiling Fan
+    area: living_room
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 5
+      percentage_step: 33.0
+      direction: forward
+
+  - entity_id: fan.master_bedroom_ceiling_fan
+    name: Master Bedroom Ceiling Fan
+    area: master_bedroom
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  - entity_id: fan.bedroom_ceiling_fan
+    name: Bedroom Ceiling Fan
+    area: bedroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  - entity_id: fan.guest_bedroom_ceiling_fan
+    name: Guest Bedroom Ceiling Fan
+    area: guest_bedroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  - entity_id: fan.patio_ceiling_fan
+    name: Patio Ceiling Fan
+    area: patio
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  # --- Smart/tower fans (full features) ---
+  - entity_id: fan.office_tower_fan
+    name: Office Tower Fan
+    area: office
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 15
+      percentage_step: 10.0
+      preset_modes:
+        - auto
+        - sleep
+        - turbo
+      oscillating: true
+      direction: forward
+
+  - entity_id: fan.nursery_fan
+    name: Nursery Fan
+    area: nursery
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 15
+      percentage_step: 10.0
+      preset_modes:
+        - auto
+        - sleep
+        - quiet
+      oscillating: false
+      direction: forward
+
+  - entity_id: fan.dining_room_ceiling_fan
+    name: Dining Room Ceiling Fan
+    area: dining_room
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 7
+      percentage_step: 33.0
+      oscillating: false
+      direction: forward
+
+  - entity_id: fan.kitchen_range_hood
+    name: Kitchen Range Hood Fan
+    area: kitchen
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 1
+      percentage_step: 33.0

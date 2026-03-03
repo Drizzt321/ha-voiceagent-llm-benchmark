@@ -1,0 +1,50 @@
+entities:
+  - entity_id: sensor.kitchen_temperature
+    name: Kitchen Temperature
+    area: kitchen
+    domain: sensor
+    state: "72.1"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.office_temperature
+    name: Office Temperature
+    area: office
+    domain: sensor
+    state: "70.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.3d_printer_nozzle_temp
+    name: 3D Printer Nozzle Temperature
+    area: office
+    domain: sensor
+    state: "215"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°C"
+
+  - entity_id: sensor.bathroom_temperature
+    name: Bathroom Temperature
+    area: bathroom
+    domain: sensor
+    state: "73.5"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.bedroom_temperature
+    name: Bedroom Temperature
+    area: bedroom
+    domain: sensor
+    state: "70.0"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"

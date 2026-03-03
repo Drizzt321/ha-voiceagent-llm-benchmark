@@ -1,0 +1,9 @@
+entities:
+  - entity_id: valve.water_main
+    name: Water Main Shutoff
+    area: garage
+    domain: valve
+    state: open
+    attributes:
+      device_class: water
+      supported_features: 1

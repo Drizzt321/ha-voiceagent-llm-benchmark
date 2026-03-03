@@ -1,0 +1,70 @@
+entities:
+  - entity_id: fan.bathroom_exhaust
+    name: Bathroom Exhaust Fan
+    area: bathroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.master_bathroom_exhaust
+    name: Master Bathroom Exhaust Fan
+    area: master_bathroom
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 0
+
+  - entity_id: fan.living_room_ceiling_fan
+    name: Living Room Ceiling Fan
+    area: living_room
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 5
+      percentage_step: 33.0
+      direction: forward
+
+  - entity_id: fan.master_bedroom_ceiling_fan
+    name: Master Bedroom Ceiling Fan
+    area: master_bedroom
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  - entity_id: fan.bedroom_ceiling_fan
+    name: Bedroom Ceiling Fan
+    area: bedroom
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 5
+      percentage_step: 25.0
+      direction: forward
+
+  - entity_id: fan.office_tower_fan
+    name: Office Tower Fan
+    area: office
+    domain: fan
+    state: "on"
+    attributes:
+      supported_features: 15
+      percentage_step: 10.0
+      preset_modes:
+        - auto
+        - sleep
+        - turbo
+      oscillating: true
+      direction: forward
+
+  - entity_id: fan.kitchen_range_hood
+    name: Kitchen Range Hood Fan
+    area: kitchen
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 1
+      percentage_step: 33.0

@@ -1,0 +1,67 @@
+areas:
+  # Large tier — 14 areas
+  # Derived from Enormous by dropping: mudroom, laundry_room, nursery, patio,
+  #   upstairs_hallway, upstairs_bathroom
+  #
+  # Re-area'd entities:
+  #   binary_sensor.back_door_contact:    patio → entry
+  #   binary_sensor.patio_window_contact: patio → back_yard (preserves unknown meta-state)
+
+  # First Floor (8)
+  - id: kitchen
+    name: Kitchen
+    floor: first
+
+  - id: dining_room
+    name: Dining Room
+    floor: first
+
+  - id: living_room
+    name: Living Room
+    floor: first
+
+  - id: entry
+    name: Entry
+    floor: first
+
+  - id: hallway
+    name: Hallway
+    floor: first
+
+  - id: office
+    name: Office
+    floor: first
+
+  - id: bathroom
+    name: Bathroom
+    floor: first
+
+  - id: garage
+    name: Garage
+    floor: first
+
+  # Second Floor (4)
+  - id: master_bedroom
+    name: Master Bedroom
+    floor: second
+
+  - id: master_bathroom
+    name: Master Bathroom
+    floor: second
+
+  - id: bedroom
+    name: Bedroom
+    floor: second
+
+  - id: guest_bedroom
+    name: Guest Bedroom
+    floor: second
+
+  # Outdoor (2)
+  - id: front_yard
+    name: Front Yard
+    floor: outdoor
+
+  - id: back_yard
+    name: Back Yard
+    floor: outdoor

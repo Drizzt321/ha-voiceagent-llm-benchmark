@@ -1,0 +1,182 @@
+entities:
+  # --- Climate (9 entities) ---
+  # States: heat×3, off×2, cool×2, auto×1, heat_cool×1
+  # HVAC distribution: Kitchen (heat_cool), Living Room (auto), Office (heat),
+  #   Master Bedroom (cool), Bedroom (heat), Nursery (heat), Garage (off),
+  #   plus portable heater (null area, off) and wine cooler (kitchen, cool).
+  #
+  # Key disambiguation scenarios:
+  #   - climate.kitchen_thermostat + climate.kitchen_wine_cooler: same domain, same area,
+  #     radically different temperature ranges (45-65°F wine vs 60-85°F HVAC)
+  #   - climate.office_thermostat + switch.office_space_heater: cross-domain collision
+  #   - climate.portable_heater: null area — scenario 3 (climate without area + sensor with area)
+
+  - entity_id: climate.kitchen_thermostat
+    name: Kitchen Thermostat
+    area: kitchen
+    domain: climate
+    state: heat_cool
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - heat_cool
+        - auto
+        - fan_only
+      preset_modes:
+        - away
+        - eco
+        - comfort
+      fan_modes:
+        - auto
+        - low
+        - medium
+        - high
+      min_temp: 60
+      max_temp: 85
+      target_temp_step: 0.5
+
+  - entity_id: climate.kitchen_wine_cooler
+    name: Wine Cooler
+    area: kitchen
+    domain: climate
+    state: cool
+    attributes:
+      hvac_modes:
+        - "off"
+        - cool
+      min_temp: 44
+      max_temp: 65
+      target_temp_step: 1.0
+
+  - entity_id: climate.living_room_thermostat
+    name: Living Room Thermostat
+    area: living_room
+    domain: climate
+    state: auto
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - heat_cool
+        - auto
+        - fan_only
+      preset_modes:
+        - away
+        - eco
+        - comfort
+        - sleep
+      fan_modes:
+        - auto
+        - low
+        - medium
+        - high
+      min_temp: 60
+      max_temp: 85
+      target_temp_step: 0.5
+
+  - entity_id: climate.office_thermostat
+    name: Office Thermostat
+    area: office
+    domain: climate
+    state: heat
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - auto
+      preset_modes:
+        - away
+        - eco
+        - comfort
+      fan_modes:
+        - auto
+        - low
+        - high
+      min_temp: 60
+      max_temp: 80
+      target_temp_step: 0.5
+
+  - entity_id: climate.master_bedroom_thermostat
+    name: Master Bedroom Thermostat
+    area: master_bedroom
+    domain: climate
+    state: cool
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+        - cool
+        - heat_cool
+      preset_modes:
+        - away
+        - sleep
+        - comfort
+      fan_modes:
+        - auto
+        - low
+        - medium
+        - high
+      min_temp: 62
+      max_temp: 82
+      target_temp_step: 0.5
+
+  - entity_id: climate.bedroom_thermostat
+    name: Bedroom Thermostat
+    area: bedroom
+    domain: climate
+    state: heat
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+      min_temp: 62
+      max_temp: 78
+      target_temp_step: 1.0
+
+  - entity_id: climate.nursery_thermostat
+    name: Nursery Thermostat
+    area: nursery
+    domain: climate
+    state: heat
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+      preset_modes:
+        - eco
+        - comfort
+      min_temp: 65
+      max_temp: 78
+      target_temp_step: 0.5
+
+  - entity_id: climate.garage_thermostat
+    name: Garage Heater
+    area: garage
+    domain: climate
+    state: "off"
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+      min_temp: 40
+      max_temp: 70
+      target_temp_step: 1.0
+
+  # Disambiguation scenario 3: climate without area + sensor with area.
+  # Also used for "turn off the heater" cross-domain test with switch.office_space_heater.
+  - entity_id: climate.portable_heater
+    name: Portable Heater
+    area: null
+    domain: climate
+    state: "off"
+    attributes:
+      hvac_modes:
+        - "off"
+        - heat
+      min_temp: 60
+      max_temp: 85
+      target_temp_step: 1.0

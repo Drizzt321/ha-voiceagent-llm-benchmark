@@ -1,0 +1,40 @@
+areas:
+  # Medium tier — 8 areas
+  # Derived from Large by dropping: dining_room, master_bedroom, master_bathroom,
+  #   guest_bedroom, front_yard, back_yard
+  #
+  # Re-area'd entities: none
+
+  # First Floor (7)
+  - id: kitchen
+    name: Kitchen
+    floor: first
+
+  - id: living_room
+    name: Living Room
+    floor: first
+
+  - id: entry
+    name: Entry
+    floor: first
+
+  - id: hallway
+    name: Hallway
+    floor: first
+
+  - id: office
+    name: Office
+    floor: first
+
+  - id: bathroom
+    name: Bathroom
+    floor: first
+
+  - id: garage
+    name: Garage
+    floor: first
+
+  # Second Floor (1)
+  - id: bedroom
+    name: Bedroom
+    floor: second

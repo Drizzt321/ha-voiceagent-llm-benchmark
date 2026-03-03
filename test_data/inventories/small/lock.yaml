@@ -1,0 +1,8 @@
+entities:
+  - entity_id: lock.front_door_lock
+    name: Front Door Lock
+    area: null
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0

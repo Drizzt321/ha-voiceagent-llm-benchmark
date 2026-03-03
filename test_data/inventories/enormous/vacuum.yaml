@@ -1,0 +1,45 @@
+entities:
+  # --- Vacuum (3 entities) ---
+  # Entity count inflated from realistic 1-2 to cover 3 states: docked, cleaning, error.
+  # Acceptable inflation for state coverage — documented here.
+  # Each entity has different supported_features to test capability variation.
+
+  # supported_features bitmask:
+  #   START=8192, PAUSE=4, STOP=8, RETURN_HOME=16, FAN_SPEED=32,
+  #   BATTERY=64, LOCATE=512, STATE=4096
+  # Full-featured: 8192+4+8+16+32+64+512+4096 = 12924
+  # Basic: 8192+8+16+64+4096 = 12376
+
+  - entity_id: vacuum.downstairs_robot
+    name: Downstairs Robot Vacuum
+    area: living_room
+    domain: vacuum
+    state: docked
+    attributes:
+      supported_features: 12924
+      fan_speed_list:
+        - quiet
+        - standard
+        - strong
+        - max
+
+  - entity_id: vacuum.upstairs_robot
+    name: Upstairs Robot Vacuum
+    area: upstairs_hallway
+    domain: vacuum
+    state: cleaning
+    attributes:
+      supported_features: 12924
+      fan_speed_list:
+        - quiet
+        - standard
+        - strong
+        - max
+
+  - entity_id: vacuum.garage_robot
+    name: Garage Robot Vacuum
+    area: garage
+    domain: vacuum
+    state: error
+    attributes:
+      supported_features: 12376

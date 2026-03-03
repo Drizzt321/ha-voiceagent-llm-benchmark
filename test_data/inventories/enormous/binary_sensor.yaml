@@ -1,0 +1,772 @@
+entities:
+  # --- Binary Sensor (87 entities) ---
+  # 17+ distinct device_class values for maximum variety.
+  # Meta-states: one entity with state: unknown (binary_sensor.patio_window_contact).
+  # Key disambiguation: binary_sensor.kitchen_patio_door — area:kitchen, name embeds "patio" (cross-area name embedding).
+  # Companion groups: washer (running+vibration), dryer (running+vibration), EV charger (plug+connected).
+
+  # =========================================================
+  # MOTION SENSORS (device_class: motion)
+  # Transitional spaces — detect transient movement.
+  # =========================================================
+  - entity_id: binary_sensor.hallway_motion
+    name: Hallway Motion
+    area: hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.upstairs_hallway_motion
+    name: Upstairs Hallway Motion
+    area: upstairs_hallway
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.entry_motion
+    name: Entry Motion
+    area: entry
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.garage_motion
+    name: Garage Motion
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.front_yard_driveway_motion
+    name: Driveway Motion
+    area: front_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.back_yard_motion
+    name: Back Yard Motion
+    area: back_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.living_room_motion
+    name: Living Room Motion
+    area: living_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.kitchen_motion
+    name: Kitchen Motion
+    area: kitchen
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.mudroom_motion
+    name: Mudroom Motion
+    area: mudroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.patio_motion
+    name: Patio Motion
+    area: patio
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.office_motion
+    name: Office Motion
+    area: office
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.dining_room_motion
+    name: Dining Room Motion
+    area: dining_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  # =========================================================
+  # OCCUPANCY SENSORS (device_class: occupancy)
+  # Sustained presence — mmWave/PIR presence detection.
+  # =========================================================
+  - entity_id: binary_sensor.kitchen_occupancy
+    name: Kitchen Occupancy
+    area: kitchen
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.living_room_occupancy
+    name: Living Room Occupancy
+    area: living_room
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.office_occupancy
+    name: Office Occupancy
+    area: office
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.master_bedroom_occupancy
+    name: Master Bedroom Occupancy
+    area: master_bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.bedroom_occupancy
+    name: Bedroom Occupancy
+    area: bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.bathroom_occupancy
+    name: Bathroom Occupancy
+    area: bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.guest_bedroom_occupancy
+    name: Guest Bedroom Occupancy
+    area: guest_bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.nursery_occupancy
+    name: Nursery Occupancy
+    area: nursery
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.entry_occupancy
+    name: Entry Occupancy
+    area: entry
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.upstairs_bathroom_occupancy
+    name: Upstairs Bathroom Occupancy
+    area: upstairs_bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.mudroom_occupancy
+    name: Mudroom Occupancy
+    area: mudroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.master_bathroom_occupancy
+    name: Master Bathroom Occupancy
+    area: master_bathroom
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  # =========================================================
+  # DOOR CONTACTS (device_class: door)
+  # =========================================================
+  - entity_id: binary_sensor.front_door_contact
+    name: Front Door
+    area: entry
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  # Cross-area name embedding: area=kitchen, name embeds "patio" — misleading.
+  # Tests whether LLM resolves by area assignment vs name substring.
+  - entity_id: binary_sensor.kitchen_patio_door
+    name: Kitchen Patio Door
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.back_door_contact
+    name: Back Door
+    area: patio
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.mudroom_door_contact
+    name: Mudroom Door
+    area: mudroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.garage_side_door_contact
+    name: Garage Side Door
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.back_gate_contact
+    name: Back Gate
+    area: back_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.shed_door_contact
+    name: Shed Door
+    area: back_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.refrigerator_door
+    name: Refrigerator Door
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.oven_door
+    name: Oven Door
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: door
+
+  - entity_id: binary_sensor.front_yard_gate_contact
+    name: Front Yard Gate
+    area: front_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: gate
+
+  # =========================================================
+  # WINDOW CONTACTS (device_class: window)
+  # =========================================================
+  - entity_id: binary_sensor.living_room_window_1
+    name: Living Room Window Left
+    area: living_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.living_room_window_2
+    name: Living Room Window Right
+    area: living_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.kitchen_window
+    name: Kitchen Window
+    area: kitchen
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.master_bedroom_window
+    name: Master Bedroom Window
+    area: master_bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.bedroom_window
+    name: Bedroom Window
+    area: bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.office_window
+    name: Office Window
+    area: office
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.nursery_window
+    name: Nursery Window
+    area: nursery
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.guest_bedroom_window
+    name: Guest Bedroom Window
+    area: guest_bedroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.garage_side_window
+    name: Garage Side Window
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.upstairs_bathroom_window
+    name: Upstairs Bathroom Window
+    area: upstairs_bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.dining_room_window
+    name: Dining Room Window
+    area: dining_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.bathroom_window
+    name: Bathroom Window
+    area: bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.master_bathroom_window
+    name: Master Bathroom Window
+    area: master_bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.laundry_room_window
+    name: Laundry Room Window
+    area: laundry_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  # =========================================================
+  # MOISTURE / LEAK DETECTORS (device_class: moisture)
+  # =========================================================
+  - entity_id: binary_sensor.kitchen_sink_leak
+    name: Kitchen Sink Leak
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  - entity_id: binary_sensor.bathroom_leak
+    name: Bathroom Leak
+    area: bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  - entity_id: binary_sensor.master_bathroom_leak
+    name: Master Bathroom Leak
+    area: master_bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  - entity_id: binary_sensor.upstairs_bathroom_leak
+    name: Upstairs Bathroom Leak
+    area: upstairs_bathroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  - entity_id: binary_sensor.laundry_room_leak
+    name: Laundry Room Leak
+    area: laundry_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  - entity_id: binary_sensor.garage_water_heater_leak
+    name: Water Heater Leak
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: moisture
+
+  # =========================================================
+  # SMOKE DETECTORS (device_class: smoke)
+  # =========================================================
+  - entity_id: binary_sensor.kitchen_smoke
+    name: Kitchen Smoke Detector
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: smoke
+
+  - entity_id: binary_sensor.hallway_smoke
+    name: Hallway Smoke Detector
+    area: hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: smoke
+
+  - entity_id: binary_sensor.upstairs_hallway_smoke
+    name: Upstairs Smoke Detector
+    area: upstairs_hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: smoke
+
+  - entity_id: binary_sensor.garage_smoke
+    name: Garage Smoke Detector
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: smoke
+
+  # =========================================================
+  # CARBON MONOXIDE (device_class: carbon_monoxide)
+  # At least 3 per building code: main floor, upper floor, garage.
+  # =========================================================
+  - entity_id: binary_sensor.hallway_carbon_monoxide
+    name: Hallway CO Detector
+    area: hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: carbon_monoxide
+
+  - entity_id: binary_sensor.upstairs_hallway_carbon_monoxide
+    name: Upstairs CO Detector
+    area: upstairs_hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: carbon_monoxide
+
+  - entity_id: binary_sensor.garage_carbon_monoxide
+    name: Garage CO Detector
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: carbon_monoxide
+
+  # =========================================================
+  # GAS (device_class: gas)
+  # =========================================================
+  - entity_id: binary_sensor.garage_gas
+    name: Garage Gas Detector
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: gas
+
+  # =========================================================
+  # HEAT (device_class: heat)
+  # =========================================================
+  - entity_id: binary_sensor.kitchen_heat_detector
+    name: Kitchen Heat Detector
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: heat
+
+  # =========================================================
+  # WASHER / DRYER — companion groups
+  # (device_class: running, vibration)
+  # =========================================================
+  - entity_id: binary_sensor.washer_running
+    name: Washer Running
+    area: laundry_room
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: running
+
+  - entity_id: binary_sensor.washer_vibration
+    name: Washer Vibration
+    area: laundry_room
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: vibration
+
+  - entity_id: binary_sensor.dryer_running
+    name: Dryer Running
+    area: laundry_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: running
+
+  - entity_id: binary_sensor.dryer_vibration
+    name: Dryer Vibration
+    area: laundry_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: vibration
+
+  # Dishwasher companion
+  - entity_id: binary_sensor.dishwasher_running
+    name: Dishwasher Running
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: running
+
+  # =========================================================
+  # GARAGE / PRESENCE (device_class: garage_door, presence)
+  # =========================================================
+  - entity_id: binary_sensor.garage_door_1_contact
+    name: Garage Door 1
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: garage_door
+
+  - entity_id: binary_sensor.garage_door_2_contact
+    name: Garage Door 2
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: garage_door
+
+  - entity_id: binary_sensor.garage_car_presence
+    name: Garage Car Present
+    area: garage
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: presence
+
+  - entity_id: binary_sensor.driveway_car_presence
+    name: Driveway Car Present
+    area: front_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: presence
+
+  # =========================================================
+  # EV CHARGER companion (device_class: plug)
+  # =========================================================
+  - entity_id: binary_sensor.ev_charger_connected
+    name: EV Charger Connected
+    area: garage
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: plug
+
+  # =========================================================
+  # CONNECTIVITY (device_class: connectivity)
+  # =========================================================
+  - entity_id: binary_sensor.internet_connectivity
+    name: Internet Connection
+    area: null
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: connectivity
+
+  # =========================================================
+  # SOUND (device_class: sound)
+  # Baby monitor in nursery.
+  # =========================================================
+  - entity_id: binary_sensor.nursery_baby_monitor
+    name: Nursery Baby Monitor
+    area: nursery
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: sound
+
+  # =========================================================
+  # TAMPER (device_class: tamper)
+  # =========================================================
+  - entity_id: binary_sensor.back_gate_tamper
+    name: Back Gate Tamper
+    area: back_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: tamper
+
+  - entity_id: binary_sensor.mailbox_tamper
+    name: Mailbox Tamper
+    area: front_yard
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: tamper
+
+  # =========================================================
+  # BATTERY LOW (device_class: battery)
+  # =========================================================
+  - entity_id: binary_sensor.front_door_lock_battery_low
+    name: Front Door Lock Battery Low
+    area: entry
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: battery
+
+  - entity_id: binary_sensor.smoke_detector_battery_low
+    name: Smoke Detector Battery Low
+    area: hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: battery
+
+  - entity_id: binary_sensor.garage_door_sensor_battery_low
+    name: Garage Door Sensor Battery Low
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: battery
+
+  # No area — disambiguation scenario 7 (entity without area, area-based query).
+  - entity_id: binary_sensor.motion_sensor_battery_low
+    name: Motion Sensor Battery Low
+    area: null
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: battery
+
+  # =========================================================
+  # POOL EQUIPMENT (device_class: running)
+  # =========================================================
+  - entity_id: binary_sensor.pool_pump_running
+    name: Pool Pump Running
+    area: back_yard
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: running
+
+  # =========================================================
+  # PROBLEM (device_class: problem)
+  # =========================================================
+  - entity_id: binary_sensor.garage_door_open_too_long
+    name: Garage Door Open Too Long
+    area: garage
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: problem
+
+  # =========================================================
+  # ADDITIONAL WINDOW CONTACTS
+  # =========================================================
+  - entity_id: binary_sensor.hallway_window
+    name: Hallway Window
+    area: hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.upstairs_hallway_window
+    name: Upstairs Hallway Window
+    area: upstairs_hallway
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  - entity_id: binary_sensor.mudroom_window
+    name: Mudroom Window
+    area: mudroom
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: window
+
+  # =========================================================
+  # META-STATE: unknown
+  # Graceful handling of uninitialized device (disambiguation scenario 8).
+  # =========================================================
+  - entity_id: binary_sensor.patio_window_contact
+    name: Patio Window Contact
+    area: patio
+    domain: binary_sensor
+    state: unknown
+    attributes:
+      device_class: window

@@ -1,0 +1,90 @@
+entities:
+  # --- Lock (10 entities) ---
+  # States: 5 locked, 4 unlocked, 1 jammed
+  # supported_features: 0 = basic lock/unlock only; 1 = OPEN feature (physical latch)
+  #
+  # Key disambiguation: front_door_lock + front_door_deadbolt — "lock the front door" is ambiguous.
+  # Mudroom and office have OPEN feature for latch-release smart locks.
+  # back_gate and shed_padlock test outdoor lock routing.
+  # mailbox_lock is jammed — graceful degradation scenario.
+
+  - entity_id: lock.front_door_lock
+    name: Front Door Lock
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.front_door_deadbolt
+    name: Front Door Deadbolt
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.back_door_lock
+    name: Back Door Lock
+    area: patio
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.mudroom_door_lock
+    name: Mudroom Door Lock
+    area: mudroom
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.garage_entry_door_lock
+    name: Garage Entry Door Lock
+    area: garage
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.garage_side_door_lock
+    name: Garage Side Door Lock
+    area: garage
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.office_door_lock
+    name: Office Door Lock
+    area: office
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.back_gate_lock
+    name: Back Gate Lock
+    area: back_yard
+    domain: lock
+    state: unlocked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.shed_padlock
+    name: Shed Padlock
+    area: back_yard
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  # Jammed state — graceful degradation scenario (disambiguation scenario 6 variant).
+  - entity_id: lock.mailbox_lock
+    name: Mailbox Lock
+    area: front_yard
+    domain: lock
+    state: jammed
+    attributes:
+      supported_features: 0

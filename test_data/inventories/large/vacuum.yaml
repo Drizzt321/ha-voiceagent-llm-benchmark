@@ -1,0 +1,13 @@
+entities:
+  - entity_id: vacuum.downstairs_robot
+    name: Downstairs Robot Vacuum
+    area: living_room
+    domain: vacuum
+    state: docked
+    attributes:
+      supported_features: 12924
+      fan_speed_list:
+        - quiet
+        - standard
+        - strong
+        - max

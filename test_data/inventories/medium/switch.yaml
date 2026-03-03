@@ -1,0 +1,79 @@
+entities:
+  - entity_id: switch.living_room_tv_plug
+    name: Living Room TV Plug
+    area: living_room
+    domain: switch
+    state: "on"
+
+  # --- Seasonal / decorative ---
+  - entity_id: switch.kitchen_garbage_disposal
+    name: Kitchen Garbage Disposal
+    area: kitchen
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.kitchen_coffee_maker
+    name: Coffee Maker
+    area: kitchen
+    domain: switch
+    state: "on"
+
+  # --- Laundry room ---
+  - entity_id: switch.bedroom_electric_blanket
+    name: Electric Blanket
+    area: bedroom
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.office_space_heater
+    name: Office Space Heater
+    area: office
+    domain: switch
+    state: "on"
+
+  # --- Tech hub: Office ---
+  - entity_id: switch.office_grow_light
+    name: Office Grow Light
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.office_server_rack_pdu
+    name: Server Rack PDU
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.3d_printer
+    name: 3D Printer
+    area: office
+    domain: switch
+    state: "on"
+
+  # Aquarium companion group: switch.aquarium_pump + switch.aquarium_heater + light.aquarium_light
+  # + sensor.aquarium_water_temperature — "turn off the aquarium" ambiguity.
+  - entity_id: switch.aquarium_pump
+    name: Aquarium Pump
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.aquarium_heater
+    name: Aquarium Heater
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.ev_charger
+    name: EV Charger
+    area: garage
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.garage_chest_freezer
+    name: Garage Chest Freezer
+    area: garage
+    domain: switch
+    state: "on"
+
+  # --- Air purifiers ---

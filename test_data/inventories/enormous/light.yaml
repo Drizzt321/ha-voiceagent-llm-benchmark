@@ -1,0 +1,1614 @@
+entities:
+  # --- Light (130 entities) ---
+  # Capability distribution targets: ~17% onoff-only, ~25% brightness, ~35% color_temp,
+  #   ~18% RGB (hs/rgb), ~5% RGBW — realistic home mix from §8 of generation principles.
+  #
+  # Naming archaeology:
+  #   - light.hue_kitchen_strip: brand-name identifier
+  #   - light.smart_bulb_e7a2: generic auto-generated name, state: unavailable (actionable unavailable entity)
+  #   - light.old_living_room_lamp: moved-but-never-renamed (area: guest_bedroom, name says "Living Room")
+  #   - light.front_yard_christmas_lights: seasonal naming
+  #
+  # Duplicate friendly names (disambiguation scenarios):
+  #   - "Floor Lamp" × 3: living_room, master_bedroom, guest_bedroom
+  #   - "Vanity Light" × 3: bathroom, master_bathroom, upstairs_bathroom
+  #   - "Nightlight" × 4: bathroom, master_bedroom, master_bathroom, nursery
+  #   - "Desk Lamp" × 3: office, bedroom, guest_bedroom
+  #
+  # Unavailable actionable entity: light.smart_bulb_e7a2 (area: office)
+  # Tests whether LLM refrains from issuing commands to an offline light.
+
+  # =========================================================
+  # KITCHEN (8 entities)
+  # =========================================================
+  - entity_id: light.kitchen_ceiling
+    name: Kitchen Ceiling Light
+    area: kitchen
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.kitchen_under_cabinet_1
+    name: Kitchen Under Cabinet Left
+    area: kitchen
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0
+
+  - entity_id: light.kitchen_under_cabinet_2
+    name: Kitchen Under Cabinet Right
+    area: kitchen
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0
+
+  - entity_id: light.kitchen_island_pendant_1
+    name: Kitchen Island Pendant 1
+    area: kitchen
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.kitchen_island_pendant_2
+    name: Kitchen Island Pendant 2
+    area: kitchen
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.kitchen_island_pendant_3
+    name: Kitchen Island Pendant 3
+    area: kitchen
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  # Brand-name identifier — tests "turn on the Hue" resolution.
+  - entity_id: light.hue_kitchen_strip
+    name: Hue Kitchen Strip
+    area: kitchen
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - hs
+        - color_temp
+      color_mode: hs
+      min_color_temp_kelvin: 2000
+      max_color_temp_kelvin: 6500
+      supported_features: 40
+
+  - entity_id: light.kitchen_pantry
+    name: Kitchen Pantry Light
+    area: kitchen
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # LIVING ROOM (12 entities)
+  # 4+ lights in same area — disambiguation scenario 4.
+  # =========================================================
+  - entity_id: light.living_room_ceiling
+    name: Living Room Ceiling Light
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  # Floor Lamp — same friendly name as master_bedroom and guest_bedroom instances.
+  - entity_id: light.living_room_floor_lamp
+    name: Floor Lamp
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.living_room_corner_lamp
+    name: Living Room Corner Lamp
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  # Companion to media_player.living_room_tv — TV bias lighting LED strip.
+  - entity_id: light.living_room_tv_backlight
+    name: Living Room TV Backlight
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: hs
+      supported_features: 40
+
+  - entity_id: light.living_room_bookshelf_lights
+    name: Living Room Bookshelf Lights
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  - entity_id: light.living_room_reading_lamp
+    name: Living Room Reading Lamp
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.living_room_accent_strip
+    name: Living Room Accent Strip
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: null
+      supported_features: 40
+
+  - entity_id: light.living_room_table_lamp
+    name: Living Room Table Lamp
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.living_room_sofa_lamp
+    name: Living Room Sofa Lamp
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.living_room_fireplace_mantle_lights
+    name: Fireplace Mantle Lights
+    area: living_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  - entity_id: light.living_room_ceiling_fan_light
+    name: Living Room Ceiling Fan Light
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.living_room_plant_light
+    name: Living Room Plant Light
+    area: living_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # DINING ROOM (8 entities)
+  # =========================================================
+  - entity_id: light.dining_room_chandelier
+    name: Dining Room Chandelier
+    area: dining_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.dining_room_buffet_lamp
+    name: Dining Room Buffet Lamp
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.dining_room_sideboard_light
+    name: Dining Room Sideboard Light
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.dining_room_china_cabinet_light
+    name: Dining Room China Cabinet Light
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.dining_room_pendant
+    name: Dining Room Pendant
+    area: dining_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 4500
+      supported_features: 0
+
+  - entity_id: light.dining_room_accent_light
+    name: Dining Room Accent Light
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.dining_room_corner_lamp
+    name: Dining Room Corner Lamp
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.dining_room_artwork_light
+    name: Dining Room Artwork Light
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # ENTRY (6 entities)
+  # =========================================================
+  - entity_id: light.entry_overhead
+    name: Entry Overhead Light
+    area: entry
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.entry_sconce_1
+    name: Entry Sconce Left
+    area: entry
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.entry_sconce_2
+    name: Entry Sconce Right
+    area: entry
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.entry_table_lamp
+    name: Entry Table Lamp
+    area: entry
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  - entity_id: light.entry_exterior_light
+    name: Entry Exterior Light
+    area: entry
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.entry_closet_light
+    name: Entry Closet Light
+    area: entry
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # MUDROOM (3 entities)
+  # =========================================================
+  - entity_id: light.mudroom_overhead
+    name: Mudroom Overhead Light
+    area: mudroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.mudroom_utility_light
+    name: Mudroom Utility Light
+    area: mudroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.mudroom_closet_light
+    name: Mudroom Closet Light
+    area: mudroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # HALLWAY (6 entities)
+  # Higher density is realistic — 2-story hallway with stairwell.
+  # Same area name as upstairs_hallway — creates cross-area naming collision.
+  # =========================================================
+  - entity_id: light.hallway_overhead_1
+    name: Hallway Overhead
+    area: hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.hallway_overhead_2
+    name: Hallway Overhead 2
+    area: hallway
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.hallway_sconce_1
+    name: Hallway Sconce
+    area: hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.hallway_sconce_2
+    name: Hallway Sconce 2
+    area: hallway
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.stairwell_light
+    name: Stairwell Light
+    area: hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.under_stair_light
+    name: Under Stair Light
+    area: hallway
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # OFFICE (9 entities) — tech hub
+  # Contains: aquarium companion (light.aquarium_light),
+  #           unavailable smart bulb (light.smart_bulb_e7a2),
+  #           monitor bias lighting (rgb), desk lamp
+  # =========================================================
+  - entity_id: light.office_ceiling
+    name: Office Ceiling Light
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0
+
+  # Desk Lamp — same friendly name as bedroom_desk_lamp and guest_bedroom_desk_lamp.
+  - entity_id: light.office_desk_lamp
+    name: Desk Lamp
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0
+
+  # Aquarium companion: light + switch.aquarium_pump + switch.aquarium_heater + sensor.aquarium_*
+  - entity_id: light.aquarium_light
+    name: Aquarium Light
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: hs
+      supported_features: 40
+
+  - entity_id: light.office_bookcase_light
+    name: Office Bookcase Light
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.office_monitor_bias_light
+    name: Monitor Bias Light
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: hs
+      supported_features: 40
+
+  # Generic auto-generated name + UNAVAILABLE state = actionable unavailable entity.
+  # Tests whether LLM refrains from issuing commands to an offline light.
+  - entity_id: light.smart_bulb_e7a2
+    name: Smart Bulb E7A2
+    area: office
+    domain: light
+    state: unavailable
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.office_reading_lamp
+    name: Office Reading Lamp
+    area: office
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.office_closet_light
+    name: Office Closet Light
+    area: office
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.office_wall_sconce
+    name: Office Wall Sconce
+    area: office
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # LAUNDRY ROOM (3 entities)
+  # =========================================================
+  - entity_id: light.laundry_room_overhead
+    name: Laundry Room Overhead Light
+    area: laundry_room
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.laundry_room_utility_light
+    name: Laundry Room Utility Light
+    area: laundry_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.laundry_closet_light
+    name: Laundry Closet Light
+    area: laundry_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # BATHROOM (4 entities)
+  # =========================================================
+  - entity_id: light.bathroom_overhead
+    name: Bathroom Overhead Light
+    area: bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # Vanity Light — same friendly name as master_bathroom and upstairs_bathroom instances.
+  - entity_id: light.bathroom_vanity
+    name: Vanity Light
+    area: bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.bathroom_mirror_light
+    name: Bathroom Mirror Light
+    area: bathroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  # Nightlight — same friendly name as master_bedroom, master_bathroom, nursery instances.
+  - entity_id: light.bathroom_nightlight
+    name: Nightlight
+    area: bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # GARAGE (6 entities)
+  # =========================================================
+  - entity_id: light.garage_overhead_1
+    name: Garage Overhead 1
+    area: garage
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  - entity_id: light.garage_overhead_2
+    name: Garage Overhead 2
+    area: garage
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.garage_workbench_light
+    name: Garage Workbench Light
+    area: garage
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.garage_side_door_light
+    name: Garage Side Door Light
+    area: garage
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.garage_utility_light
+    name: Garage Utility Light
+    area: garage
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.garage_exterior_light
+    name: Garage Exterior Light
+    area: garage
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # =========================================================
+  # MASTER BEDROOM (10 entities)
+  # =========================================================
+  - entity_id: light.master_bedroom_ceiling
+    name: Master Bedroom Ceiling Light
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_nightstand_lamp_1
+    name: Master Bedroom Nightstand Lamp
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2200
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_nightstand_lamp_2
+    name: Master Bedroom Nightstand Lamp 2
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2200
+      max_color_temp_kelvin: 4000
+      supported_features: 0
+
+  # Floor Lamp — same friendly name as living_room and guest_bedroom instances.
+  - entity_id: light.master_bedroom_floor_lamp
+    name: Floor Lamp
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_closet_light
+    name: Master Bedroom Closet Light
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_reading_light
+    name: Master Bedroom Reading Light
+    area: master_bedroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_accent_strip
+    name: Master Bedroom Accent Strip
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: null
+      supported_features: 40
+
+  # Nightlight — same friendly name as bathroom, master_bathroom, nursery instances.
+  - entity_id: light.master_bedroom_nightlight
+    name: Nightlight
+    area: master_bedroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_vanity_light
+    name: Master Bedroom Vanity Light
+    area: master_bedroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.master_bedroom_under_bed_strip
+    name: Under Bed LED Strip
+    area: master_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: null
+      supported_features: 40
+
+  # =========================================================
+  # MASTER BATHROOM (4 entities)
+  # =========================================================
+  - entity_id: light.master_bathroom_overhead
+    name: Master Bathroom Overhead Light
+    area: master_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # Vanity Light — same friendly name as bathroom and upstairs_bathroom instances.
+  - entity_id: light.master_bathroom_vanity
+    name: Vanity Light
+    area: master_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0
+
+  - entity_id: light.master_bathroom_mirror_light
+    name: Master Bathroom Mirror Light
+    area: master_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  # Nightlight — same friendly name as bathroom, master_bedroom, nursery instances.
+  - entity_id: light.master_bathroom_nightlight
+    name: Nightlight
+    area: master_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # =========================================================
+  # BEDROOM (8 entities)
+  # =========================================================
+  - entity_id: light.bedroom_ceiling
+    name: Bedroom Ceiling Light
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  # Desk Lamp — same friendly name as office_desk_lamp and guest_bedroom_desk_lamp.
+  - entity_id: light.bedroom_desk_lamp
+    name: Desk Lamp
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.bedroom_standing_lamp
+    name: Bedroom Standing Lamp
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.bedroom_closet_light
+    name: Bedroom Closet Light
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.bedroom_night_light
+    name: Bedroom Night Light
+    area: bedroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.bedroom_led_strip
+    name: Bedroom LED Strip
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: null
+      supported_features: 40
+
+  - entity_id: light.bedroom_bookshelf_light
+    name: Bedroom Bookshelf Light
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.bedroom_ceiling_fan_light
+    name: Bedroom Ceiling Fan Light
+    area: bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # GUEST BEDROOM (5 entities)
+  # =========================================================
+  - entity_id: light.guest_bedroom_ceiling
+    name: Guest Bedroom Ceiling Light
+    area: guest_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  # Desk Lamp — same friendly name as office_desk_lamp and bedroom_desk_lamp.
+  - entity_id: light.guest_bedroom_desk_lamp
+    name: Desk Lamp
+    area: guest_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  # Moved-but-never-renamed entity: area is guest_bedroom but name says "Living Room Lamp".
+  # Tests whether LLM resolves by area assignment or name string.
+  - entity_id: light.old_living_room_lamp
+    name: Living Room Lamp
+    area: guest_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  # Floor Lamp — same friendly name as living_room and master_bedroom instances.
+  - entity_id: light.guest_bedroom_floor_lamp
+    name: Floor Lamp
+    area: guest_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.guest_bedroom_closet_light
+    name: Guest Bedroom Closet Light
+    area: guest_bedroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # NURSERY (6 entities)
+  # Warm-only color_temp for ceiling (baby comfort — no harsh cool white).
+  # =========================================================
+  # Warm-only ceiling — min==max range is narrow; creates interesting test for LLM.
+  - entity_id: light.nursery_ceiling
+    name: Nursery Ceiling Light
+    area: nursery
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2200
+      max_color_temp_kelvin: 3000
+      supported_features: 0
+
+  # Nightlight — same friendly name as bathroom, master_bedroom, master_bathroom instances.
+  - entity_id: light.nursery_nightlight
+    name: Nightlight
+    area: nursery
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.nursery_closet_light
+    name: Nursery Closet Light
+    area: nursery
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.nursery_star_projector
+    name: Nursery Star Projector
+    area: nursery
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: null
+      supported_features: 40
+
+  - entity_id: light.nursery_reading_lamp
+    name: Nursery Reading Lamp
+    area: nursery
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2200
+      max_color_temp_kelvin: 3500
+      supported_features: 0
+
+  - entity_id: light.nursery_ceiling_fan_light
+    name: Nursery Ceiling Fan Light
+    area: nursery
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  # =========================================================
+  # UPSTAIRS HALLWAY (5 entities)
+  # Same high density as first-floor hallway.
+  # =========================================================
+  - entity_id: light.upstairs_hallway_overhead_1
+    name: Upstairs Hallway Overhead
+    area: upstairs_hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.upstairs_hallway_overhead_2
+    name: Upstairs Hallway Overhead 2
+    area: upstairs_hallway
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.upstairs_hallway_sconce_1
+    name: Upstairs Hallway Sconce
+    area: upstairs_hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.upstairs_hallway_sconce_2
+    name: Upstairs Hallway Sconce 2
+    area: upstairs_hallway
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.upstairs_stairwell_light
+    name: Upstairs Stairwell Light
+    area: upstairs_hallway
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # UPSTAIRS BATHROOM (4 entities)
+  # =========================================================
+  - entity_id: light.upstairs_bathroom_overhead
+    name: Upstairs Bathroom Overhead Light
+    area: upstairs_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # Vanity Light — same friendly name as bathroom and master_bathroom instances.
+  - entity_id: light.upstairs_bathroom_vanity
+    name: Vanity Light
+    area: upstairs_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: color_temp
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  - entity_id: light.upstairs_bathroom_mirror_light
+    name: Upstairs Bathroom Mirror Light
+    area: upstairs_bathroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.upstairs_bathroom_night_light
+    name: Upstairs Bathroom Night Light
+    area: upstairs_bathroom
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # PATIO (5 entities)
+  # =========================================================
+  - entity_id: light.patio_ceiling_light
+    name: Patio Ceiling Light
+    area: patio
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.patio_string_lights
+    name: Patio String Lights
+    area: patio
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: rgbw
+      supported_features: 40
+
+  - entity_id: light.patio_wall_sconce_1
+    name: Patio Wall Sconce Left
+    area: patio
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  - entity_id: light.patio_wall_sconce_2
+    name: Patio Wall Sconce Right
+    area: patio
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.patio_garden_stake_lights
+    name: Patio Garden Stake Lights
+    area: patio
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # =========================================================
+  # FRONT YARD (8 entities)
+  # =========================================================
+  - entity_id: light.front_yard_pathway_1
+    name: Front Yard Pathway Light 1
+    area: front_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  - entity_id: light.front_yard_pathway_2
+    name: Front Yard Pathway Light 2
+    area: front_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  - entity_id: light.front_yard_pathway_3
+    name: Front Yard Pathway Light 3
+    area: front_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.front_yard_spotlight_1
+    name: Front Yard Spotlight 1
+    area: front_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.front_yard_spotlight_2
+    name: Front Yard Spotlight 2
+    area: front_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.front_yard_porch_light
+    name: Front Porch Light
+    area: front_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # Seasonal naming — tests whether LLM handles seasonal device references.
+  # Holiday lights as light domain (not switch) — tests domain attribution.
+  - entity_id: light.front_yard_christmas_lights
+    name: Front Yard Christmas Lights
+    area: front_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: null
+      supported_features: 40
+
+  - entity_id: light.front_yard_garden_path_light
+    name: Front Yard Garden Path Light
+    area: front_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  # =========================================================
+  # BACK YARD (8 entities)
+  # =========================================================
+  - entity_id: light.back_yard_porch_light
+    name: Back Porch Light
+    area: back_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: onoff
+      supported_features: 0
+
+  - entity_id: light.back_yard_flood_light_1
+    name: Back Yard Flood Light 1
+    area: back_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.back_yard_flood_light_2
+    name: Back Yard Flood Light 2
+    area: back_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: null
+      supported_features: 0
+
+  # Color LED pool light.
+  - entity_id: light.back_yard_pool_light
+    name: Pool Light
+    area: back_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - hs
+      color_mode: hs
+      supported_features: 40
+
+  # Premium RGBW LED string lights for back yard.
+  - entity_id: light.back_yard_string_lights
+    name: Back Yard String Lights
+    area: back_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - rgbw
+      color_mode: rgbw
+      supported_features: 40
+
+  - entity_id: light.back_yard_path_lights
+    name: Back Yard Path Lights
+    area: back_yard
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - onoff
+      color_mode: null
+      supported_features: 0
+
+  - entity_id: light.back_yard_garden_spotlight
+    name: Back Yard Garden Spotlight
+    area: back_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  - entity_id: light.back_yard_deck_light
+    name: Back Yard Deck Light
+    area: back_yard
+    domain: light
+    state: "on"
+    attributes:
+      supported_color_modes:
+        - brightness
+      color_mode: brightness
+      supported_features: 0
+
+  # =========================================================
+  # ADDITIONAL (to reach 130)
+  # =========================================================
+  # Ceiling fan light companion to fan.dining_room_ceiling_fan.
+  - entity_id: light.dining_room_ceiling_fan_light
+    name: Dining Room Ceiling Fan Light
+    area: dining_room
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 5000
+      supported_features: 0
+
+  # Makeup mirror light — separate from vanity bar.
+  - entity_id: light.master_bathroom_makeup_mirror
+    name: Master Bathroom Makeup Mirror Light
+    area: master_bathroom
+    domain: light
+    state: "off"
+    attributes:
+      supported_color_modes:
+        - color_temp
+      color_mode: null
+      min_color_temp_kelvin: 2700
+      max_color_temp_kelvin: 6500
+      supported_features: 0

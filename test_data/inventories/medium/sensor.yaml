@@ -1,0 +1,163 @@
+entities:
+  - entity_id: sensor.kitchen_temperature
+    name: Kitchen Temperature
+    area: kitchen
+    domain: sensor
+    state: "72.1"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.kitchen_humidity
+    name: Kitchen Humidity
+    area: kitchen
+    domain: sensor
+    state: "48"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.kitchen_co2
+    name: Kitchen CO2
+    area: kitchen
+    domain: sensor
+    state: "612"
+    attributes:
+      device_class: carbon_dioxide
+      state_class: measurement
+      unit_of_measurement: ppm
+
+  - entity_id: sensor.living_room_temperature
+    name: Living Room Temperature
+    area: living_room
+    domain: sensor
+    state: "71.4"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.office_temperature
+    name: Office Temperature
+    area: office
+    domain: sensor
+    state: "70.8"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.server_rack_temperature
+    name: Server Rack Temperature
+    area: office
+    domain: sensor
+    state: "95.3"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  # 3D printer temps in °C (industry standard), while all room temps are in °F.
+  # Creates unit system mixing — "what's the temperature in the office?" returns mixed units.
+  - entity_id: sensor.3d_printer_nozzle_temp
+    name: 3D Printer Nozzle Temperature
+    area: office
+    domain: sensor
+    state: "215"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°C"
+
+  - entity_id: sensor.3d_printer_bed_temp
+    name: 3D Printer Bed Temperature
+    area: office
+    domain: sensor
+    state: "60"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°C"
+
+  # No device_class — unusual sensor type tests LLM generalization.
+  - entity_id: sensor.3d_printer_progress
+    name: 3D Printer Progress
+    area: office
+    domain: sensor
+    state: "43"
+    attributes:
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.aquarium_water_temperature
+    name: Aquarium Water Temperature
+    area: office
+    domain: sensor
+    state: "78.4"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.office_humidity
+    name: Office Humidity
+    area: office
+    domain: sensor
+    state: "42"
+    attributes:
+      device_class: humidity
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  # UPS companion group — battery competes with all Zigbee battery sensors.
+  - entity_id: sensor.ups_battery_level
+    name: UPS Battery Level
+    area: office
+    domain: sensor
+    state: "98"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"
+
+  - entity_id: sensor.bathroom_temperature
+    name: Bathroom Temperature
+    area: bathroom
+    domain: sensor
+    state: "73.5"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.garage_temperature
+    name: Garage Temperature
+    area: garage
+    domain: sensor
+    state: unavailable
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.bedroom_temperature
+    name: Bedroom Temperature
+    area: bedroom
+    domain: sensor
+    state: "70.0"
+    attributes:
+      device_class: temperature
+      state_class: measurement
+      unit_of_measurement: "°F"
+
+  - entity_id: sensor.front_door_lock_battery
+    name: Front Door Lock Battery
+    area: null
+    domain: sensor
+    state: "62"
+    attributes:
+      device_class: battery
+      state_class: measurement
+      unit_of_measurement: "%"

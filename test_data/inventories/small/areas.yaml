@@ -1,0 +1,27 @@
+areas:
+  # Small tier — 5 areas
+  # Derived from Medium by dropping: garage, entry, hallway
+  #
+  # Re-area'd entities:
+  #   lock.front_door_lock: entry → null
+  #     (entry is dropped; front door lock survives as an area-less device)
+
+  - id: kitchen
+    name: Kitchen
+    floor: first
+
+  - id: living_room
+    name: Living Room
+    floor: first
+
+  - id: office
+    name: Office
+    floor: first
+
+  - id: bathroom
+    name: Bathroom
+    floor: first
+
+  - id: bedroom
+    name: Bedroom
+    floor: second

@@ -1,0 +1,29 @@
+entities:
+  # --- Weather (3 entities) ---
+  # Three locations creates "what's the weather?" disambiguation.
+  # States: sunny, rainy, cloudy.
+  # No area assignment — weather stations are not room-level entities.
+
+  - entity_id: weather.home
+    name: Home Weather
+    area: null
+    domain: weather
+    state: sunny
+    attributes:
+      supported_features: 3
+
+  - entity_id: weather.parents_house
+    name: Parents House Weather
+    area: null
+    domain: weather
+    state: rainy
+    attributes:
+      supported_features: 3
+
+  - entity_id: weather.vacation_cabin
+    name: Vacation Cabin Weather
+    area: null
+    domain: weather
+    state: cloudy
+    attributes:
+      supported_features: 3

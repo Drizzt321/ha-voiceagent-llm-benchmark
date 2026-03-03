@@ -1,0 +1,236 @@
+entities:
+  # --- Media Player (18 entities) ---
+  # All 6 non-transient states covered: off, on, idle, playing, paused, buffering.
+  # Device types: TVs, soundbar, speakers, speaker groups, smart display, projector.
+  #
+  # Key disambiguation scenarios:
+  #   - media_player.living_room_tv + media_player.living_room_projector: "watch a movie" ambiguity
+  #   - media_player.living_room_tv + switch.living_room_tv_plug: cross-domain TV control
+  #   - "TV" vs "Television": media_player.living_room_tv vs media_player.guest_bedroom_television
+  #   - media_player.sonos_bathroom: brand-name identifier (Sonos)
+  #   - media_player.whole_home_audio: speaker group entity (grouped control)
+  #
+  # supported_features bitmask (abbreviated — full values vary by integration):
+  #   PAUSE=1, SEEK=2, VOLUME_SET=4, VOLUME_MUTE=8, PREVIOUS_TRACK=16, NEXT_TRACK=32,
+  #   TURN_ON=128, TURN_OFF=256, PLAY_MEDIA=512, VOLUME_STEP=1024, SELECT_SOURCE=2048,
+  #   STOP=4096, PLAY=16384, SHUFFLE_SET=32768, BROWSE_MEDIA=131072, REPEAT_SET=262144,
+  #   GROUPING=524288
+
+  # --- Living Room (3 entities) ---
+  # TV + projector in same room: "watch a movie" / "turn on the TV" disambiguation.
+  - entity_id: media_player.living_room_tv
+    name: Living Room TV
+    area: living_room
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 458751
+      source_list:
+        - HDMI 1
+        - HDMI 2
+        - Netflix
+        - YouTube
+        - Disney+
+      sound_mode_list:
+        - Standard
+        - Movie
+        - Music
+        - Sports
+
+  - entity_id: media_player.living_room_projector
+    name: Living Room Projector
+    area: living_room
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 384
+      source_list:
+        - HDMI 1
+        - HDMI 2
+
+  - entity_id: media_player.living_room_soundbar
+    name: Living Room Soundbar
+    area: living_room
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 21517
+      source_list:
+        - HDMI ARC
+        - Optical
+        - Bluetooth
+        - Streaming
+      sound_mode_list:
+        - Standard
+        - Movie
+        - Music
+        - Night
+
+  # --- Kitchen ---
+  - entity_id: media_player.kitchen_display
+    name: Kitchen Smart Display
+    area: kitchen
+    domain: media_player
+    state: idle
+    attributes:
+      supported_features: 17408
+      source_list:
+        - YouTube
+        - Netflix
+        - Spotify
+
+  # --- Master Bedroom ---
+  - entity_id: media_player.master_bedroom_tv
+    name: Master Bedroom TV
+    area: master_bedroom
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 195583
+      source_list:
+        - HDMI 1
+        - Netflix
+        - Prime Video
+        - Hulu
+
+  # --- Office ---
+  - entity_id: media_player.office_pc_speakers
+    name: Office PC Speakers
+    area: office
+    domain: media_player
+    state: paused
+    attributes:
+      supported_features: 21517
+
+  # --- Bathroom (brand-name identifier: Sonos) ---
+  - entity_id: media_player.sonos_bathroom
+    name: Sonos Bathroom
+    area: bathroom
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 573451
+      source_list:
+        - Spotify
+        - Pandora
+        - Radio
+        - Line In
+
+  # --- Patio ---
+  - entity_id: media_player.patio_speaker
+    name: Patio Speaker
+    area: patio
+    domain: media_player
+    state: idle
+    attributes:
+      supported_features: 21517
+      source_list:
+        - Bluetooth
+        - Spotify
+        - AUX
+
+  # --- Bedroom ---
+  - entity_id: media_player.bedroom_echo
+    name: Bedroom Echo
+    area: bedroom
+    domain: media_player
+    state: "on"
+    attributes:
+      supported_features: 21388
+      source_list:
+        - Spotify
+        - Amazon Music
+        - TuneIn
+
+  # --- Nursery ---
+  - entity_id: media_player.nursery_sound_machine
+    name: Nursery Sound Machine
+    area: nursery
+    domain: media_player
+    state: playing
+    attributes:
+      supported_features: 17412
+      source_list:
+        - White Noise
+        - Rain
+        - Ocean
+        - Heartbeat
+        - Lullaby
+
+  # --- Guest Bedroom (abbreviation: "Television" not "TV") ---
+  - entity_id: media_player.guest_bedroom_television
+    name: Guest Bedroom Television
+    area: guest_bedroom
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 195583
+      source_list:
+        - HDMI 1
+        - Netflix
+        - Cable
+
+  # --- Garage ---
+  - entity_id: media_player.garage_speaker
+    name: Garage Bluetooth Speaker
+    area: garage
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 21388
+
+  # --- Dining Room ---
+  - entity_id: media_player.dining_room_speaker
+    name: Dining Room Speaker
+    area: dining_room
+    domain: media_player
+    state: paused
+    attributes:
+      supported_features: 573451
+      source_list:
+        - Spotify
+        - Pandora
+        - AirPlay
+
+  # --- Entry ---
+  - entity_id: media_player.entry_display
+    name: Entry Smart Display
+    area: entry
+    domain: media_player
+    state: idle
+    attributes:
+      supported_features: 17408
+
+  # --- Hallway ---
+  - entity_id: media_player.hallway_speaker
+    name: Hallway Speaker
+    area: hallway
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 21388
+
+  # --- Speaker groups (null area — whole-home audio groups) ---
+  - entity_id: media_player.whole_home_audio
+    name: Whole Home Audio
+    area: null
+    domain: media_player
+    state: "off"
+    attributes:
+      supported_features: 1046025
+
+  - entity_id: media_player.upstairs_audio_group
+    name: Upstairs Audio Group
+    area: null
+    domain: media_player
+    state: buffering
+    attributes:
+      supported_features: 1046025
+
+  - entity_id: media_player.downstairs_audio
+    name: Downstairs Audio Group
+    area: null
+    domain: media_player
+    state: "on"
+    attributes:
+      supported_features: 1046025

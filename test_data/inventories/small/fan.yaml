@@ -1,0 +1,9 @@
+entities:
+  - entity_id: fan.kitchen_range_hood
+    name: Kitchen Range Hood Fan
+    area: kitchen
+    domain: fan
+    state: "off"
+    attributes:
+      supported_features: 1
+      percentage_step: 33.0

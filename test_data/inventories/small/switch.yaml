@@ -1,0 +1,29 @@
+entities:
+  - entity_id: switch.living_room_tv_plug
+    name: Living Room TV Plug
+    area: living_room
+    domain: switch
+    state: "on"
+
+  # --- Seasonal / decorative ---
+  - entity_id: switch.kitchen_coffee_maker
+    name: Coffee Maker
+    area: kitchen
+    domain: switch
+    state: "on"
+
+  # --- Laundry room ---
+  - entity_id: switch.bedroom_electric_blanket
+    name: Electric Blanket
+    area: bedroom
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.3d_printer
+    name: 3D Printer
+    area: office
+    domain: switch
+    state: "on"
+
+  # Aquarium companion group: switch.aquarium_pump + switch.aquarium_heater + light.aquarium_light
+  # + sensor.aquarium_water_temperature — "turn off the aquarium" ambiguity.

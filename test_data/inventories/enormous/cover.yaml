@@ -1,0 +1,206 @@
+entities:
+  # --- Cover (20 entities) ---
+  # Capability variation: garage doors (binary), blinds (position+tilt), curtains (position),
+  # shades (position), awning (position).
+  # Unusual domain mappings: standing desk (position → cover domain) and pet door (binary).
+  #
+  # supported_features bitmask:
+  #   OPEN=1, CLOSE=2, SET_POSITION=4, STOP=8
+  #   OPEN_TILT=16, CLOSE_TILT=32, STOP_TILT=64, SET_TILT_POSITION=128
+  # Binary garage/gate (open/close/stop only): 11
+  # Position-only (blinds, curtains, shades): 15
+  # Position + full tilt (venetian blinds): 255
+  # Standing desk (set_position + stop): 12
+
+  # --- Garage doors (binary, no position control) ---
+  - entity_id: cover.garage_door
+    name: Garage Door
+    area: garage
+    domain: cover
+    state: closed
+    attributes:
+      device_class: garage
+      supported_features: 11
+
+  - entity_id: cover.garage_secondary_door
+    name: Garage Secondary Door
+    area: garage
+    domain: cover
+    state: open
+    attributes:
+      device_class: garage
+      supported_features: 11
+
+  # --- Venetian blinds (position + full tilt) ---
+  - entity_id: cover.living_room_blinds
+    name: Living Room Blinds
+    area: living_room
+    domain: cover
+    state: open
+    attributes:
+      device_class: blind
+      supported_features: 255
+
+  - entity_id: cover.office_blinds
+    name: Office Blinds
+    area: office
+    domain: cover
+    state: closed
+    attributes:
+      device_class: blind
+      supported_features: 255
+
+  - entity_id: cover.master_bedroom_blinds
+    name: Master Bedroom Blinds
+    area: master_bedroom
+    domain: cover
+    state: open
+    attributes:
+      device_class: blind
+      supported_features: 255
+
+  - entity_id: cover.dining_room_blinds
+    name: Dining Room Blinds
+    area: dining_room
+    domain: cover
+    state: closed
+    attributes:
+      device_class: blind
+      supported_features: 255
+
+  # --- Curtains (position only, no tilt) ---
+  - entity_id: cover.living_room_curtains
+    name: Living Room Curtains
+    area: living_room
+    domain: cover
+    state: open
+    attributes:
+      device_class: curtain
+      supported_features: 15
+
+  - entity_id: cover.master_bedroom_curtains
+    name: Master Bedroom Curtains
+    area: master_bedroom
+    domain: cover
+    state: closed
+    attributes:
+      device_class: curtain
+      supported_features: 15
+
+  - entity_id: cover.guest_bedroom_curtains
+    name: Guest Bedroom Curtains
+    area: guest_bedroom
+    domain: cover
+    state: open
+    attributes:
+      device_class: curtain
+      supported_features: 15
+
+  # --- Roller shades (position only) ---
+  - entity_id: cover.bedroom_shade
+    name: Bedroom Blackout Shade
+    area: bedroom
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  - entity_id: cover.nursery_blackout_shade
+    name: Nursery Blackout Shade
+    area: nursery
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  - entity_id: cover.kitchen_shade
+    name: Kitchen Window Shade
+    area: kitchen
+    domain: cover
+    state: open
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  - entity_id: cover.bathroom_shade
+    name: Bathroom Privacy Shade
+    area: bathroom
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  # --- Awning ---
+  - entity_id: cover.patio_awning
+    name: Patio Awning
+    area: patio
+    domain: cover
+    state: open
+    attributes:
+      device_class: awning
+      supported_features: 15
+
+  # --- Skylight ---
+  - entity_id: cover.upstairs_skylight
+    name: Upstairs Skylight
+    area: upstairs_hallway
+    domain: cover
+    state: closed
+    attributes:
+      device_class: window
+      supported_features: 15
+
+  # --- Pool cover ---
+  - entity_id: cover.pool_cover
+    name: Pool Cover
+    area: back_yard
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 11
+
+  # --- Gate ---
+  - entity_id: cover.front_yard_gate
+    name: Front Yard Gate
+    area: front_yard
+    domain: cover
+    state: open
+    attributes:
+      device_class: gate
+      supported_features: 11
+
+  # --- Patio screen ---
+  - entity_id: cover.patio_screen
+    name: Patio Screen
+    area: patio
+    domain: cover
+    state: closed
+    attributes:
+      device_class: shade
+      supported_features: 15
+
+  # --- Unusual domain mappings ---
+  # Standing desk: "raise the desk" → cover.set_position — not obvious.
+  # Tests "cover means blinds" bias.
+  - entity_id: cover.office_standing_desk
+    name: Office Standing Desk
+    area: office
+    domain: cover
+    state: open
+    attributes:
+      supported_features: 12
+
+  # Pet door: creates triple disambiguation with lock.mudroom_door_lock and
+  # binary_sensor.mudroom_door_contact in the same area.
+  - entity_id: cover.mudroom_pet_door
+    name: Mudroom Pet Door
+    area: mudroom
+    domain: cover
+    state: closed
+    attributes:
+      device_class: door
+      supported_features: 11

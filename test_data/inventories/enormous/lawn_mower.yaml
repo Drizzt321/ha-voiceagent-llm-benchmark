@@ -1,0 +1,31 @@
+entities:
+  # --- Lawn Mower (3 entities) ---
+  # Entity count inflated from realistic 1-2 to cover 3 states: docked, mowing, error.
+  # Acceptable inflation for state coverage — documented here.
+  #
+  # supported_features bitmask: DOCK=1, PAUSE=2, START_MOWING=4
+  # Full: 7  Basic (no pause): 5
+
+  - entity_id: lawn_mower.front_yard_mower
+    name: Front Yard Robot Mower
+    area: front_yard
+    domain: lawn_mower
+    state: docked
+    attributes:
+      supported_features: 7
+
+  - entity_id: lawn_mower.back_yard_mower
+    name: Back Yard Robot Mower
+    area: back_yard
+    domain: lawn_mower
+    state: mowing
+    attributes:
+      supported_features: 7
+
+  - entity_id: lawn_mower.spare_mower
+    name: Spare Robot Mower
+    area: null
+    domain: lawn_mower
+    state: error
+    attributes:
+      supported_features: 5

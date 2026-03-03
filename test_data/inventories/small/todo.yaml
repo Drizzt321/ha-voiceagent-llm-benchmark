@@ -1,0 +1,8 @@
+entities:
+  - entity_id: todo.shopping_list
+    name: Shopping List
+    area: null
+    domain: todo
+    state: "3"
+    attributes:
+      supported_features: 7

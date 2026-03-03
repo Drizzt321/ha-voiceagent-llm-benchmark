@@ -1,0 +1,169 @@
+entities:
+  - entity_id: switch.irrigation_zone_4_back
+    name: Irrigation Zone 4 Back
+    area: back_yard
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.pool_pump
+    name: Pool Pump
+    area: back_yard
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.back_yard_fountain
+    name: Back Yard Fountain
+    area: back_yard
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.living_room_tv_plug
+    name: Living Room TV Plug
+    area: living_room
+    domain: switch
+    state: "on"
+
+  # --- Seasonal / decorative ---
+  - entity_id: switch.living_room_christmas_tree
+    name: Christmas Tree
+    area: living_room
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.front_yard_holiday_lights
+    name: Front Yard Holiday Lights
+    area: front_yard
+    domain: switch
+    state: "off"
+
+  # --- Patio equipment ---
+  - entity_id: switch.kitchen_garbage_disposal
+    name: Kitchen Garbage Disposal
+    area: kitchen
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.kitchen_coffee_maker
+    name: Coffee Maker
+    area: kitchen
+    domain: switch
+    state: "on"
+
+  # --- Laundry room ---
+  - entity_id: switch.bedroom_electric_blanket
+    name: Electric Blanket
+    area: bedroom
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.bedroom_air_purifier
+    name: Bedroom Air Purifier
+    area: bedroom
+    domain: switch
+    state: "off"
+
+  # --- Heated floors ---
+  - entity_id: switch.master_bathroom_heated_floor
+    name: Master Bathroom Heated Floor
+    area: master_bathroom
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.office_space_heater
+    name: Office Space Heater
+    area: office
+    domain: switch
+    state: "on"
+
+  # --- Tech hub: Office ---
+  - entity_id: switch.office_grow_light
+    name: Office Grow Light
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.office_server_rack_pdu
+    name: Server Rack PDU
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.office_ups_outlet
+    name: UPS Outlet
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.3d_printer
+    name: 3D Printer
+    area: office
+    domain: switch
+    state: "on"
+
+  # Aquarium companion group: switch.aquarium_pump + switch.aquarium_heater + light.aquarium_light
+  # + sensor.aquarium_water_temperature — "turn off the aquarium" ambiguity.
+  - entity_id: switch.aquarium_pump
+    name: Aquarium Pump
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.aquarium_heater
+    name: Aquarium Heater
+    area: office
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.office_air_purifier
+    name: Office Air Purifier
+    area: office
+    domain: switch
+    state: "on"
+
+  # --- EV / Garage ---
+  - entity_id: switch.ev_charger
+    name: EV Charger
+    area: garage
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.garage_workbench_outlet
+    name: Garage Workbench Outlet
+    area: garage
+    domain: switch
+    state: "off"
+
+  - entity_id: switch.garage_chest_freezer
+    name: Garage Chest Freezer
+    area: garage
+    domain: switch
+    state: "on"
+
+  # --- Air purifiers ---
+  - entity_id: switch.master_bedroom_air_purifier
+    name: Master Bedroom Air Purifier
+    area: master_bedroom
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.back_yard_shed_power
+    name: Shed Power
+    area: back_yard
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.smart_plug_1
+    name: Smart Plug 1
+    area: kitchen
+    domain: switch
+    state: "on"
+
+  - entity_id: switch.smart_plug_3
+    name: Smart Plug 3
+    area: null
+    domain: switch
+    state: "off"
+
+  # =========================================================
+  # ADDITIONAL (to reach 61)
+  # =========================================================

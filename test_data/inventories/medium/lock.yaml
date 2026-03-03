@@ -1,0 +1,24 @@
+entities:
+  - entity_id: lock.front_door_lock
+    name: Front Door Lock
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0
+
+  - entity_id: lock.front_door_deadbolt
+    name: Front Door Deadbolt
+    area: entry
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 1
+
+  - entity_id: lock.garage_entry_door_lock
+    name: Garage Entry Door Lock
+    area: garage
+    domain: lock
+    state: locked
+    attributes:
+      supported_features: 0

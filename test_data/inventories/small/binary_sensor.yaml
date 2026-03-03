@@ -1,0 +1,45 @@
+entities:
+  - entity_id: binary_sensor.living_room_motion
+    name: Living Room Motion
+    area: living_room
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.kitchen_motion
+    name: Kitchen Motion
+    area: kitchen
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: motion
+
+  - entity_id: binary_sensor.office_occupancy
+    name: Office Occupancy
+    area: office
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: occupancy
+
+  - entity_id: binary_sensor.kitchen_smoke
+    name: Kitchen Smoke Detector
+    area: kitchen
+    domain: binary_sensor
+    state: "off"
+    attributes:
+      device_class: smoke
+
+  - entity_id: binary_sensor.internet_connectivity
+    name: Internet Connection
+    area: null
+    domain: binary_sensor
+    state: "on"
+    attributes:
+      device_class: connectivity
+
+  # =========================================================
+  # SOUND (device_class: sound)
+  # Baby monitor in nursery.
+  # =========================================================

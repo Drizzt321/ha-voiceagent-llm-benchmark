@@ -1,0 +1,16 @@
+entities:
+  - entity_id: weather.home
+    name: Home Weather
+    area: null
+    domain: weather
+    state: sunny
+    attributes:
+      supported_features: 3
+
+  - entity_id: weather.parents_house
+    name: Parents House Weather
+    area: null
+    domain: weather
+    state: rainy
+    attributes:
+      supported_features: 3
