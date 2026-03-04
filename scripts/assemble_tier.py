@@ -22,9 +22,10 @@ Inclusion rules for test cases:
     out-of-scope) and may have empty target_entities intentionally.
 
 Validation (--validate):
-  Cross-checks target_entities and target_areas in test case metadata
-  against the assembled inventory. Reports unresolved references and
-  exits non-zero.
+  Loads and assembles source data in memory, cross-checks target_entities
+  and target_areas against the assembled inventory, then exits. No output
+  files are written. Use this to verify source consistency before producing
+  assembled output (run without --validate to write files).
 
   Intentionally skipped during validation:
   - Cases with inventory_tier == "all": inventory-independent by design;
@@ -241,6 +242,7 @@ def main() -> None:
             "BASE_DIR/test_cases/{tier}/, then writes two output files to BASE_DIR:\n"
             "  {tier}-ha-entities.yaml   — merged inventory (areas + entities)\n"
             "  {tier}-test-cases.ndjson  — merged test cases\n\n"
+            "Use --validate to check source consistency without writing any output.\n\n"
             "Example:\n"
             "  uv run scripts/assemble_tier.py --base-dir test_data/ --tier enormous\n"
             "  uv run scripts/assemble_tier.py --base-dir test_data/ --tier large "
@@ -284,10 +286,13 @@ def main() -> None:
         "--validate",
         action="store_true",
         help=(
-            "After assembling, cross-check every test case's target_entities and "
-            "target_areas against the assembled inventory. Exits non-zero and prints "
-            "a list of unresolved references if any are found. Inventory-independent "
-            "cases (inventory_tier='all') and cases with no target_entities are skipped."
+            "Validate source files without writing any output. Loads and assembles "
+            "source data in memory, cross-checks every test case's target_entities "
+            "and target_areas against the assembled inventory, then exits. No output "
+            "files are written regardless of outcome. Exits non-zero and prints "
+            "unresolved references if any are found. Inventory-independent cases "
+            "(inventory_tier='all') and cases with no target_entities are skipped. "
+            "Run without --validate to produce output files."
         ),
     )
 
@@ -346,7 +351,7 @@ def main() -> None:
     for case in cases:
         case["inventory_file"] = inventory_rel
 
-    # Validate before writing (fail fast — don't produce output on error)
+    # --validate: check consistency in memory and exit without writing any files
     if args.validate:
         entity_ids = {e["entity_id"] for e in entities}
         area_names = {a["name"] for a in areas}
@@ -360,6 +365,7 @@ def main() -> None:
                 print(w, file=sys.stderr)
             sys.exit(1)
         print(f"Validation passed — {len(cases)} test cases, {len(entities)} entities.")
+        return
 
     # Write inventory YAML
     with open(inventory_out, "w") as f:
