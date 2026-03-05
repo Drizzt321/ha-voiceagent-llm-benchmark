@@ -31,6 +31,9 @@ import yaml
 
 # Sibling module — both scripts/ files share a package-less import via sys.path
 sys.path.insert(0, str(Path(__file__).parent))
+# Package import — src/ layout
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from ha_voice_bench.prompt import DEFAULT_INSTRUCTIONS
 from llama_server import (
     check_server_health,
     check_ssh,
@@ -531,6 +534,12 @@ def main() -> None:
     log_dir: str = cfg.get("log_dir", "logs")
     assemble: bool = cfg.get("assemble_tiers", True)
     instructions_file: str = cfg.get("instructions_file", "")
+    if instructions_file:
+        instructions_text = (_REPO_ROOT / instructions_file).read_text()
+        instructions_source = instructions_file
+    else:
+        instructions_text = DEFAULT_INSTRUCTIONS
+        instructions_source = "default"
     timeout: int = cfg.get("timeout", 30)
     attempt_timeout: int = cfg.get("attempt_timeout", 15)
     max_retries: int = cfg.get("max_retries", 1)
@@ -568,6 +577,11 @@ def main() -> None:
         logger.debug("Matrix: %d runs", len(matrix))
 
     _print_run_plan(matrix, models, hw_modes, tiers, base_dir, log_dir, run_dir_rel)
+
+    logger.info("Instructions (%s):", instructions_source)
+    for line in instructions_text.splitlines():
+        logger.info("  %s", line)
+    logger.info("=" * 60)
 
     if args.dry_run:
         logger.info("")

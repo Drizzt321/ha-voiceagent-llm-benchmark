@@ -6,6 +6,7 @@ from inspect_ai import Task, task
 from inspect_ai.solver import use_tools
 
 from ha_voice_bench.dataset import load_ha_test_cases
+from ha_voice_bench.prompt import DEFAULT_INSTRUCTIONS
 from ha_voice_bench.scorers.tool_call import tool_call_scorer
 from ha_voice_bench.solver import ha_voice_solver
 from ha_voice_bench.tools import get_ha_intent_tools
@@ -62,4 +63,5 @@ def ha_voice_benchmark(
             ),
         ],
         scorer=tool_call_scorer(),
+        metadata={"instructions": instructions if instructions is not None else DEFAULT_INSTRUCTIONS},
     )
