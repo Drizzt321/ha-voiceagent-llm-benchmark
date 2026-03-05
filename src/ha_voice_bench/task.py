@@ -27,6 +27,9 @@ def ha_voice_benchmark(
     inventory: str = "sample_test_data/small-ha-entities.yaml",
     base_dir: str = ".",
     instructions_file: str = "",
+    timeout: int = 30,
+    attempt_timeout: int = 15,
+    max_retries: int = 1,
 ) -> Task:
     """HA voice intent benchmarking task.
 
@@ -37,6 +40,9 @@ def ha_voice_benchmark(
             anchored to the repo root, not CWD, to survive Inspect's module loading).
         instructions_file: Optional repo-relative path to a plain-text file containing
             custom system prompt instructions. If empty, the default HA prompt is used.
+        timeout: Total request timeout in seconds including retries (default 30).
+        attempt_timeout: Per-attempt timeout in seconds (default 15).
+        max_retries: Maximum retry attempts after a failed/timed-out attempt (default 1).
     """
     instructions: str | None = None
     if instructions_file:
@@ -50,6 +56,9 @@ def ha_voice_benchmark(
                 inventory=str(_resolve(base_dir, inventory)),
                 base_dir=str(_resolve(base_dir, "")),
                 instructions=instructions,
+                timeout=timeout,
+                attempt_timeout=attempt_timeout,
+                max_retries=max_retries,
             ),
         ],
         scorer=tool_call_scorer(),

@@ -227,6 +227,9 @@ def _build_eval_command(
     base_dir: str,
     log_dir: str,
     instructions_file: str = "",
+    timeout: int = 30,
+    attempt_timeout: int = 15,
+    max_retries: int = 1,
 ) -> list[str]:
     cmd = [
         "uv",
@@ -238,6 +241,12 @@ def _build_eval_command(
         f"test_cases={base_dir}/{rc.tier}-test-cases.ndjson",
         "-T",
         f"inventory={base_dir}/{rc.tier}-ha-entities.yaml",
+        "-T",
+        f"timeout={timeout}",
+        "-T",
+        f"attempt_timeout={attempt_timeout}",
+        "-T",
+        f"max_retries={max_retries}",
         "--model",
         "openai/local",
         "--max-connections",
@@ -246,7 +255,7 @@ def _build_eval_command(
         "plain",
         "--no-fail-on-error",
         "--log-dir",
-        f"{log_dir}/{rc.log_subdir}",
+        f"{log_dir}/{rc.log_subdir}/{rc.tier}",
         "--tags",
         rc.model.name,
         rc.model.quant,
@@ -265,21 +274,11 @@ def _build_eval_command(
 
 def _find_existing_eval(log_dir: str, rc: RunConfig) -> Path | None:
     """Return path to an existing .eval file for this run config, or None."""
-    d = _REPO_ROOT / log_dir / rc.log_subdir
+    d = _REPO_ROOT / log_dir / rc.log_subdir / rc.tier
     if not d.exists():
         return None
-    # Check each .eval file to see if it matches this tier
-    for ef in sorted(d.glob("*.eval")):
-        try:
-            with zipfile.ZipFile(ef) as zf:
-                if "header.json" in zf.namelist():
-                    header = json.loads(zf.read("header.json"))
-                    args = header.get("eval", {}).get("task_args", {})
-                    if rc.tier in args.get("test_cases", ""):
-                        return ef
-        except Exception:  # noqa: BLE001
-            pass
-    return None
+    evals = sorted(d.glob("*.eval"))
+    return evals[0] if evals else None
 
 
 def _extract_run_stats(eval_path: Path) -> tuple[int | None, float | None]:
@@ -501,6 +500,9 @@ def main() -> None:
     log_dir: str = cfg.get("log_dir", "logs")
     assemble: bool = cfg.get("assemble_tiers", True)
     instructions_file: str = cfg.get("instructions_file", "")
+    timeout: int = cfg.get("timeout", 30)
+    attempt_timeout: int = cfg.get("attempt_timeout", 15)
+    max_retries: int = cfg.get("max_retries", 1)
 
     # Warmup: enabled by default; sample count from config, overridden by CLI
     warmup_enabled: bool = not args.no_warmup
@@ -542,7 +544,7 @@ def main() -> None:
         logger.info("Run directory would be: %s", run_dir_rel)
         logger.info("Runs that would execute:")
         for i, rc in enumerate(matrix, 1):
-            cmd = _build_eval_command(rc, base_dir, str(run_dir), instructions_file)
+            cmd = _build_eval_command(rc, base_dir, str(run_dir), instructions_file, timeout, attempt_timeout, max_retries)
             logger.info("  [%d/%d] %s / %s", i, len(matrix), rc.config_label, rc.tier)
             logger.debug("  CMD: %s", " ".join(cmd))
         return
@@ -676,7 +678,7 @@ def main() -> None:
             logger.info("  Server already loaded, reusing")
 
         # Run inspect eval
-        cmd = _build_eval_command(rc, base_dir, str(run_dir), instructions_file)
+        cmd = _build_eval_command(rc, base_dir, str(run_dir), instructions_file, timeout, attempt_timeout, max_retries)
         logger.debug("  CMD: %s", " ".join(cmd))
 
         run_start = time.monotonic()
@@ -703,7 +705,7 @@ def main() -> None:
                 "  Done: %s samples | %.0fs%s",
                 n_samples if n_samples is not None else "?",
                 wall_time,
-                f" | {run_dir_rel}/{rc.log_subdir}/" if eval_path else "",
+                f" | {run_dir_rel}/{rc.log_subdir}/{rc.tier}/" if eval_path else "",
             )
         else:
             logger.error("  FAILED (exit %d): %s", result.returncode, result.stderr.strip()[:200])

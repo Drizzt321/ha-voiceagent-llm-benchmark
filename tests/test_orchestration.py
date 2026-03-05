@@ -212,6 +212,14 @@ class TestBuildEvalCommand:
         assert "--display plain" in joined
         assert "--no-fail-on-error" in joined
 
+    def test_timeout_params_passed_as_task_args(self) -> None:
+        rc = self._make_rc()
+        cmd = _build_eval_command(rc, "test_data", "logs", timeout=30, attempt_timeout=15, max_retries=1)
+        joined = " ".join(cmd)
+        assert "timeout=30" in joined
+        assert "attempt_timeout=15" in joined
+        assert "max_retries=1" in joined
+
     def test_correct_test_cases_path(self) -> None:
         rc = self._make_rc()
         cmd = _build_eval_command(rc, "test_data", "logs")
@@ -227,7 +235,7 @@ class TestBuildEvalCommand:
         cmd = _build_eval_command(rc, "test_data", "logs")
         assert "--log-dir" in cmd
         log_dir_idx = cmd.index("--log-dir")
-        assert "qwen2.5-7b-Q4_K_M-gpu-ctx8192" in cmd[log_dir_idx + 1]
+        assert "qwen2.5-7b-Q4_K_M-gpu-ctx8192/small" in cmd[log_dir_idx + 1]
 
     def test_metadata_includes_hw_and_tier(self) -> None:
         rc = self._make_rc()

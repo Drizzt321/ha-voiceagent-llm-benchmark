@@ -104,6 +104,16 @@ assemble_tiers: true
 #
 # warmup_samples: 5
 
+# LLM request timeout settings.
+# timeout: total seconds allowed for a request including all retries.
+# attempt_timeout: seconds allowed for a single attempt; if exceeded, the attempt
+#   is abandoned and retried (up to max_retries). Useful for catching hung generations
+#   where the model stalls at 100% GPU without returning.
+# max_retries: number of retry attempts after a failed/timed-out attempt.
+timeout: 30
+attempt_timeout: 15
+max_retries: 1
+
 # System prompt instructions file (optional).
 # Repo-relative path to a plain-text file containing custom instruction text.
 # If omitted, the default HA prompt is used (see docs/ha-benchmark-run-and-analysis.md
