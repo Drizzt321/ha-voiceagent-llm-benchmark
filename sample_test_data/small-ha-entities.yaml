@@ -1,0 +1,342 @@
+areas:
+- id: kitchen
+  name: Kitchen
+  floor: first
+- id: living_room
+  name: Living Room
+  floor: first
+- id: office
+  name: Office
+  floor: first
+- id: bathroom
+  name: Bathroom
+  floor: first
+- id: bedroom
+  name: Bedroom
+  floor: second
+entities:
+- entity_id: binary_sensor.living_room_motion
+  name: Living Room Motion
+  area: living_room
+  domain: binary_sensor
+  state: 'off'
+  attributes:
+    device_class: motion
+- entity_id: binary_sensor.kitchen_motion
+  name: Kitchen Motion
+  area: kitchen
+  domain: binary_sensor
+  state: 'on'
+  attributes:
+    device_class: motion
+- entity_id: binary_sensor.office_occupancy
+  name: Office Occupancy
+  area: office
+  domain: binary_sensor
+  state: 'on'
+  attributes:
+    device_class: occupancy
+- entity_id: binary_sensor.kitchen_smoke
+  name: Kitchen Smoke Detector
+  area: kitchen
+  domain: binary_sensor
+  state: 'off'
+  attributes:
+    device_class: smoke
+- entity_id: binary_sensor.internet_connectivity
+  name: Internet Connection
+  area: null
+  domain: binary_sensor
+  state: 'on'
+  attributes:
+    device_class: connectivity
+- entity_id: climate.kitchen_thermostat
+  name: Kitchen Thermostat
+  area: kitchen
+  domain: climate
+  state: heat_cool
+  attributes:
+    hvac_modes:
+    - 'off'
+    - heat
+    - cool
+    - heat_cool
+    - auto
+    - fan_only
+    preset_modes:
+    - away
+    - eco
+    - comfort
+    fan_modes:
+    - auto
+    - low
+    - medium
+    - high
+    min_temp: 60
+    max_temp: 85
+    target_temp_step: 0.5
+- entity_id: climate.bedroom_thermostat
+  name: Bedroom Thermostat
+  area: bedroom
+  domain: climate
+  state: heat
+  attributes:
+    hvac_modes:
+    - 'off'
+    - heat
+    min_temp: 62
+    max_temp: 78
+    target_temp_step: 1.0
+- entity_id: cover.bedroom_shade
+  name: Bedroom Blackout Shade
+  area: bedroom
+  domain: cover
+  state: closed
+  attributes:
+    device_class: shade
+    supported_features: 15
+- entity_id: cover.office_standing_desk
+  name: Office Standing Desk
+  area: office
+  domain: cover
+  state: open
+  attributes:
+    supported_features: 12
+- entity_id: fan.kitchen_range_hood
+  name: Kitchen Range Hood Fan
+  area: kitchen
+  domain: fan
+  state: 'off'
+  attributes:
+    supported_features: 1
+    percentage_step: 33.0
+- entity_id: light.kitchen_ceiling
+  name: Kitchen Ceiling Light
+  area: kitchen
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: color_temp
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 5000
+    supported_features: 0
+- entity_id: light.hue_kitchen_strip
+  name: Hue Kitchen Strip
+  area: kitchen
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - hs
+    - color_temp
+    color_mode: hs
+    min_color_temp_kelvin: 2000
+    max_color_temp_kelvin: 6500
+    supported_features: 40
+- entity_id: light.living_room_ceiling
+  name: Living Room Ceiling Light
+  area: living_room
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: color_temp
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 5000
+    supported_features: 0
+- entity_id: light.living_room_tv_backlight
+  name: Living Room TV Backlight
+  area: living_room
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - hs
+    color_mode: hs
+    supported_features: 40
+- entity_id: light.office_ceiling
+  name: Office Ceiling Light
+  area: office
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: color_temp
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 6500
+    supported_features: 0
+- entity_id: light.office_desk_lamp
+  name: Desk Lamp
+  area: office
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: color_temp
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 6500
+    supported_features: 0
+- entity_id: light.smart_bulb_e7a2
+  name: Smart Bulb E7A2
+  area: office
+  domain: light
+  state: unavailable
+  attributes:
+    supported_color_modes:
+    - brightness
+    color_mode: null
+    supported_features: 0
+- entity_id: light.bathroom_overhead
+  name: Bathroom Overhead Light
+  area: bathroom
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - onoff
+    color_mode: onoff
+    supported_features: 0
+- entity_id: light.bathroom_vanity
+  name: Vanity Light
+  area: bathroom
+  domain: light
+  state: 'on'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: color_temp
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 5000
+    supported_features: 0
+- entity_id: light.bedroom_ceiling
+  name: Bedroom Ceiling Light
+  area: bedroom
+  domain: light
+  state: 'off'
+  attributes:
+    supported_color_modes:
+    - color_temp
+    color_mode: null
+    min_color_temp_kelvin: 2700
+    max_color_temp_kelvin: 5000
+    supported_features: 0
+- entity_id: lock.front_door_lock
+  name: Front Door Lock
+  area: null
+  domain: lock
+  state: locked
+  attributes:
+    supported_features: 0
+- entity_id: media_player.living_room_tv
+  name: Living Room TV
+  area: living_room
+  domain: media_player
+  state: playing
+  attributes:
+    supported_features: 458751
+    source_list:
+    - HDMI 1
+    - HDMI 2
+    - Netflix
+    - YouTube
+    - Disney+
+    sound_mode_list:
+    - Standard
+    - Movie
+    - Music
+    - Sports
+- entity_id: media_player.bedroom_echo
+  name: Bedroom Echo
+  area: bedroom
+  domain: media_player
+  state: 'on'
+  attributes:
+    supported_features: 21388
+    source_list:
+    - Spotify
+    - Amazon Music
+    - TuneIn
+- entity_id: sensor.kitchen_temperature
+  name: Kitchen Temperature
+  area: kitchen
+  domain: sensor
+  state: '72.1'
+  attributes:
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °F
+- entity_id: sensor.office_temperature
+  name: Office Temperature
+  area: office
+  domain: sensor
+  state: '70.8'
+  attributes:
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °F
+- entity_id: sensor.3d_printer_nozzle_temp
+  name: 3D Printer Nozzle Temperature
+  area: office
+  domain: sensor
+  state: '215'
+  attributes:
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °C
+- entity_id: sensor.bathroom_temperature
+  name: Bathroom Temperature
+  area: bathroom
+  domain: sensor
+  state: '73.5'
+  attributes:
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °F
+- entity_id: sensor.bedroom_temperature
+  name: Bedroom Temperature
+  area: bedroom
+  domain: sensor
+  state: '70.0'
+  attributes:
+    device_class: temperature
+    state_class: measurement
+    unit_of_measurement: °F
+- entity_id: switch.living_room_tv_plug
+  name: Living Room TV Plug
+  area: living_room
+  domain: switch
+  state: 'on'
+- entity_id: switch.kitchen_coffee_maker
+  name: Coffee Maker
+  area: kitchen
+  domain: switch
+  state: 'on'
+- entity_id: switch.bedroom_electric_blanket
+  name: Electric Blanket
+  area: bedroom
+  domain: switch
+  state: 'off'
+- entity_id: switch.3d_printer
+  name: 3D Printer
+  area: office
+  domain: switch
+  state: 'on'
+- entity_id: todo.shopping_list
+  name: Shopping List
+  area: null
+  domain: todo
+  state: '3'
+  attributes:
+    supported_features: 7
+- entity_id: weather.home
+  name: Home Weather
+  area: null
+  domain: weather
+  state: sunny
+  attributes:
+    supported_features: 3

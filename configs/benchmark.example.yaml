@@ -1,0 +1,121 @@
+# HA Voice Benchmark — Orchestration Config
+#
+# Copy this file to configs/my-run.yaml and edit for your environment.
+# Run with:
+#   uv run scripts/run_benchmark.py configs/my-run.yaml
+#   uv run scripts/run_benchmark.py configs/my-run.yaml --dry-run
+#   uv run scripts/run_benchmark.py configs/my-run.yaml --resume
+#
+# The script will:
+#   1. SSH to the llama.cpp host and cycle through each model/hw/ctx combination.
+#   2. Run inspect eval for each tier against each server configuration.
+#   3. Write .eval log files to log_dir/{model}-{quant}-{hw}-ctx{ctx}/.
+#   4. Print a high-level timing summary when done.
+#
+# All .eval logs are the primary output. Point Claude Code (or similar) at
+# the log directory for analysis — see docs/ha-benchmark-run-and-analysis.md.
+
+# ── Server ────────────────────────────────────────────────────────────────────
+
+server:
+  host: darkllama            # Hostname or IP of the machine running llama-server
+  ssh_user: drizzt           # SSH username (key auth required — run ssh-copy-id first)
+  llama_cpp_dir: ~/projects/llama.cpp/build  # Directory on the remote host containing bin/llama-server
+  port: 8080                 # Port llama-server listens on
+  startup_timeout: 300       # Seconds to wait for the server to respond after starting.
+                             # First run of a new model may download it — allow extra time.
+
+# ── Tiers ─────────────────────────────────────────────────────────────────────
+# Which benchmark tiers to run. Each tier has a pre-assembled inventory and
+# test case file in base_dir (assembled by scripts/assemble_tier.py).
+# Tiers run in order listed; comment out any you want to skip.
+
+tiers:
+  - small      # ~34 entities, ~80 cases
+  - medium     # ~88 entities, ~104 cases
+  # - large    # ~185 entities, ~126 cases
+  # - enormous # ~453 entities, ~146 cases  (needs ctx_size >= 32768)
+
+# ── Hardware Modes ────────────────────────────────────────────────────────────
+# List the hardware configurations to test. Each mode restarts the server with
+# different GPU layer settings. GPU and CPU runs use the same model weights.
+#
+#   ngl: 99  — offload all layers to GPU (fast, VRAM-limited)
+#   ngl: 0   — CPU-only inference (slow, no VRAM limit)
+#
+# Remove cpu if you only want GPU results (or vice versa).
+
+hardware_modes:
+  - label: gpu
+    ngl: 99
+  - label: cpu
+    ngl: 0
+
+# ── Models ────────────────────────────────────────────────────────────────────
+# List of models to benchmark. Each model is identified by its HuggingFace repo.
+# llama-server downloads the model on first use (-hf flag); subsequent runs use
+# the local cache (~/.cache/huggingface on the remote host).
+#
+# ctx_sizes: list of context window sizes to test for this model. Each size is
+#   a separate matrix cell — the server is restarted for each. Use 32768 for
+#   enormous tier (requires ~26K tokens per prompt). Use 8192 for small/medium.
+#   The model's n_ctx_train (max training context) is the upper bound.
+#
+# quant: quantization to load (e.g. Q4_K_M, Q8_0, fp16).
+#   Passed to llama-server as -hfq to select the matching GGUF file from the HF
+#   repo. Also used for logging and directory naming.
+#
+# Note on model source: prefer bartowski's builds over the official model org repos.
+#   bartowski uses imatrix-guided quantization (calibrated against a dataset), which
+#   gives measurably better accuracy than standard quantization at the same quant level.
+#   e.g. bartowski/Qwen2.5-7B-Instruct-GGUF outperforms Qwen/Qwen2.5-7B-Instruct-GGUF
+#   on this benchmark despite identical quant labels.
+#
+# extra_flags: optional list of additional llama-server CLI flags for this model.
+#   e.g. ["--override-kv", "tokenizer.ggml.add_bos_token=bool:false"]
+
+models:
+  - hf_repo: "bartowski/Qwen2.5-7B-Instruct-GGUF"
+    name: "qwen2.5-7b"
+    quant: "Q4_K_M"
+    ctx_sizes: [8192, 32768]
+
+  # - hf_repo: "bartowski/Qwen2.5-3B-Instruct-GGUF"
+  #   name: "qwen2.5-3b"
+  #   quant: "Q4_K_M"
+  #   ctx_sizes: [8192]
+
+  # - hf_repo: "bartowski/Llama-3.2-3B-Instruct-GGUF"
+  #   name: "llama3.2-3b"
+  #   quant: "Q4_K_M"
+  #   ctx_sizes: [8192]
+
+# ── Run Settings ──────────────────────────────────────────────────────────────
+
+# If true, run scripts/assemble_tier.py for each tier before starting evals.
+# Set to false if you have already assembled the tiers and don't want to re-run.
+assemble_tiers: true
+
+# Warmup: after each server start, run a short eval against sample_test_data/
+# to prime GPU kernels and KV cache before benchmark timing begins.
+# Enabled by default even if omitted from config. Disable with --no-warmup CLI flag.
+# By default runs all samples in sample_test_data/small-test-cases.ndjson (~80 cases, ~2min).
+# Set warmup_samples to limit to the first N samples (e.g. 5 is usually sufficient).
+#
+# warmup_samples: 5
+
+# System prompt instructions file (optional).
+# Repo-relative path to a plain-text file containing custom instruction text.
+# If omitted, the default HA prompt is used (see docs/ha-benchmark-run-and-analysis.md
+# for the full default text and prompt experiment guidance).
+#
+# instructions_file: configs/prompts/my-experiment.txt
+
+# Directory containing assembled tier files ({tier}-ha-entities.yaml,
+# {tier}-test-cases.ndjson). Usually test_data/ — populated by assemble_tier.py.
+base_dir: test_data
+
+# Root directory for all inspect eval log files.
+# Each configuration writes to: {log_dir}/{model}-{quant}-{hw}-ctx{ctx_size}/
+# The orchestration run log is written to: {log_dir}/orchestration.log
+log_dir: logs
