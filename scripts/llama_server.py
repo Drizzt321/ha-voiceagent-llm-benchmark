@@ -197,6 +197,34 @@ def get_server_info(health_url: str) -> dict | None:
     return None
 
 
+def check_server_health(health_url: str) -> tuple[str, dict | None]:
+    """Probe the server and classify its state.
+
+    Returns:
+        ("alive", data)  — server responded 200; data is the parsed JSON.
+        ("hung", None)   — TCP connected but no HTTP response within timeout.
+        ("dead", None)   — connection refused or otherwise unreachable.
+
+    Distinguishing "hung" from "dead" matters for the retry policy: a hung
+    server should be skipped immediately (no retry), while a dead server may
+    be transiently unreachable and warrants one retry.
+    """
+    try:
+        with urllib.request.urlopen(health_url, timeout=5) as resp:
+            if resp.status == 200:
+                return "alive", loads(resp.read().decode("utf-8"))
+        return "dead", None
+    except urllib.error.URLError as e:
+        # socket.timeout is aliased to TimeoutError since Python 3.3
+        if isinstance(e.reason, TimeoutError):
+            return "hung", None
+        return "dead", None
+    except TimeoutError:
+        return "hung", None
+    except (OSError, JSONDecodeError):
+        return "dead", None
+
+
 def get_remote_log_tail(host: str, ssh_user: str, lines: int = 30) -> str:
     """Fetch the last N lines of /tmp/llama-server.log from the remote host."""
     target = f"{ssh_user}@{host}"

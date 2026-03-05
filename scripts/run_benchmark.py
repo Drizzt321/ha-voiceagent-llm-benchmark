@@ -32,6 +32,7 @@ import yaml
 # Sibling module — both scripts/ files share a package-less import via sys.path
 sys.path.insert(0, str(Path(__file__).parent))
 from llama_server import (
+    check_server_health,
     check_ssh,
     get_remote_log_tail,
     get_server_info,
@@ -305,14 +306,38 @@ _WARMUP_TEST_CASES = _REPO_ROOT / "sample_test_data" / "small-test-cases.ndjson"
 _WARMUP_INVENTORY = _REPO_ROOT / "sample_test_data" / "small-ha-entities.yaml"
 
 
-def _run_warmup(rc: RunConfig, run_dir: Path, samples: int | None) -> None:
+def _check_server_after_failure(health_url: str) -> str:
+    """Check server health after a failure and return 'alive', 'hung', or 'dead'.
+
+    Retry policy:
+    - hung  → return immediately (TCP connected but unresponsive; no point retrying)
+    - dead  → wait 2s and check once more (handles transient network hiccup)
+    - alive → return immediately (failure was not caused by a server crash)
+    """
+    status, _ = check_server_health(health_url)
+    if status == "hung":
+        logger.error("  Health check: server hung (TCP connected, no HTTP response)")
+        return "hung"
+    if status == "dead":
+        logger.warning("  Health check: server dead — waiting 2s for retry...")
+        time.sleep(2)
+        status, _ = check_server_health(health_url)
+        if status != "alive":
+            logger.error("  Health check: server still dead after retry")
+            return "dead"
+    logger.debug("  Health check: server alive")
+    return "alive"
+
+
+def _run_warmup(rc: RunConfig, run_dir: Path, samples: int | None) -> bool:
     """Run a short eval against sample_test_data to warm up the server.
 
+    Returns True if warmup succeeded (exit 0), False on timeout or error.
     Results are saved to run_dir/warmup/<server-key>/ but excluded from
     benchmark analysis. Uses --display none — warmup output is noise.
     Paths are resolved from _REPO_ROOT so they work regardless of CWD.
     """
-    label = f"all samples" if samples is None else f"{samples} sample{'s' if samples != 1 else ''}"
+    label = "all samples" if samples is None else f"{samples} sample{'s' if samples != 1 else ''}"
     logger.info("  Warming up (%s)...", label)
     t0 = time.monotonic()
 
@@ -330,14 +355,20 @@ def _run_warmup(rc: RunConfig, run_dir: Path, samples: int | None) -> None:
     if samples is not None:
         cmd += ["--limit", str(samples)]
 
-    result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True)
-    elapsed = time.monotonic() - t0
+    try:
+        result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, timeout=120)
+    except subprocess.TimeoutExpired:
+        logger.error("  Warmup timed out after 120s — server may have crashed")
+        return False
 
+    elapsed = time.monotonic() - t0
     if result.returncode != 0:
-        logger.warning("  Warmup finished with errors (%.0fs) — continuing", elapsed)
+        logger.warning("  Warmup finished with errors (%.0fs)", elapsed)
         logger.debug("  Warmup stderr: %s", result.stderr.strip()[-1000:])
-    else:
-        logger.info("  Warmup done (%.0fs)", elapsed)
+        return False
+
+    logger.info("  Warmup done (%.0fs)", elapsed)
+    return True
 
 
 # ── Summary display ───────────────────────────────────────────────────────────
@@ -577,6 +608,8 @@ def main() -> None:
     results: list[RunResult] = []
     total_start = time.monotonic()
     current_server_key: tuple | None = None
+    # Server keys confirmed dead/hung mid-run; remaining tiers are skipped.
+    skipped_server_keys: set[tuple] = set()
 
     for i, rc in enumerate(matrix, 1):
         logger.info("")
@@ -598,6 +631,12 @@ def main() -> None:
                     )
                 )
                 continue
+
+        # Skip remaining tiers for a server config that was found dead/hung.
+        if rc.server_key in skipped_server_keys:
+            logger.info("  Skipping — server config was skipped due to crash")
+            results.append(RunResult(rc=rc, status="failed", error="Server crash — config skipped"))
+            continue
 
         # Restart server if server config changed
         if rc.server_key != current_server_key:
@@ -657,8 +696,6 @@ def main() -> None:
                     f"  model ctx_train={actual_ctx}" if actual_ctx else "",
                 )
                 current_server_key = rc.server_key
-                if warmup_enabled:
-                    _run_warmup(rc, run_dir, warmup_samples)
             except TimeoutError as e:
                 logger.error("  Server timed out: %s", e)
                 tail = get_remote_log_tail(host, ssh_user)
@@ -674,6 +711,22 @@ def main() -> None:
                         )
                 current_server_key = None
                 continue
+
+            # Warmup (outside the wait_for_ready try so its failure is handled separately)
+            if warmup_enabled:
+                warmup_ok = _run_warmup(rc, run_dir, warmup_samples)
+                if not warmup_ok:
+                    server_status = _check_server_after_failure(health_url)
+                    if server_status in ("hung", "dead"):
+                        tail = get_remote_log_tail(host, ssh_user)
+                        logger.error("  Remote log tail:\n%s", tail)
+                        logger.error("  Skipping all tiers for this server config")
+                        skipped_server_keys.add(rc.server_key)
+                        current_server_key = None
+                        results.append(RunResult(rc=rc, status="failed", error=f"Server {server_status} after warmup failure"))
+                        continue
+                    # Server alive despite warmup errors — proceed to eval
+                    logger.warning("  Warmup failed but server is alive — proceeding to eval")
         else:
             logger.info("  Server already loaded, reusing")
 
@@ -681,8 +734,25 @@ def main() -> None:
         cmd = _build_eval_command(rc, base_dir, str(run_dir), instructions_file, timeout, attempt_timeout, max_retries)
         logger.debug("  CMD: %s", " ".join(cmd))
 
+        n_samples_est = _count_samples(base_dir, rc.tier)
+        eval_timeout = max(300, (n_samples_est or 10) * 60)  # at least 5 min, 60s/sample budget
+
         run_start = time.monotonic()
-        result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True)
+        try:
+            result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, timeout=eval_timeout)
+        except subprocess.TimeoutExpired:
+            wall_time = time.monotonic() - run_start
+            logger.error("  Eval timed out after %ds — server may have crashed", eval_timeout)
+            results.append(RunResult(rc=rc, status="failed", error=f"eval timeout after {eval_timeout}s", wall_time=wall_time))
+            server_status = _check_server_after_failure(health_url)
+            if server_status in ("hung", "dead"):
+                tail = get_remote_log_tail(host, ssh_user)
+                logger.error("  Remote log tail:\n%s", tail)
+                logger.error("  Skipping remaining tiers for this server config")
+                skipped_server_keys.add(rc.server_key)
+                current_server_key = None
+            continue
+
         wall_time = time.monotonic() - run_start
 
         logger.debug("  inspect eval exit code: %d", result.returncode)
@@ -709,6 +779,13 @@ def main() -> None:
             )
         else:
             logger.error("  FAILED (exit %d): %s", result.returncode, result.stderr.strip()[:200])
+            server_status = _check_server_after_failure(health_url)
+            if server_status in ("hung", "dead"):
+                tail = get_remote_log_tail(host, ssh_user)
+                logger.error("  Remote log tail:\n%s", tail)
+                logger.error("  Skipping remaining tiers for this server config")
+                skipped_server_keys.add(rc.server_key)
+                current_server_key = None
 
         results.append(
             RunResult(
