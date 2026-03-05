@@ -331,3 +331,52 @@ content (e.g. the YAML entity inventory) appears as one wrapped line — the act
 the model retains all newlines. The `.eval` log shows the real content.
 
 ---
+
+## 9. llama-server: quant is part of `-hf`, not a separate flag
+
+**Symptom:** Server starts but loads the wrong quantization (or defaults to Q4_K_M) despite
+specifying a quant in config.
+
+**Cause:** There is no `-hfq` flag. The quantization is appended directly to the `-hf`
+repo argument using a colon separator:
+
+```bash
+# Wrong — -hfq does not exist
+bin/llama-server -hf bartowski/Qwen2.5-7B-Instruct-GGUF -hfq Q3_K_M
+
+# Correct
+bin/llama-server -hf bartowski/Qwen2.5-7B-Instruct-GGUF:Q3_K_M
+```
+
+If the quant is omitted entirely, llama-server defaults to Q4_K_M, or falls back to the
+first file in the repo if Q4_K_M doesn't exist. The quant match is case-insensitive.
+
+The `quant` field in `benchmark.example.yaml` is passed this way automatically by the
+orchestrator — no need to add it to `extra_flags`.
+
+---
+
+## 10. DKMS / Kernel Update — GPU Disappears After Kernel Bump
+
+**Symptom:** `nvidia-smi` fails, `modprobe nvidia` returns
+`Module nvidia not found in directory /lib/modules/<new-kernel>`
+
+**Cause:** Debian kernel update bumped the running kernel version but DKMS
+did not automatically rebuild the nvidia module for the new kernel.
+`dkms status` will show the module built for the old kernel version only.
+
+**Fix:**
+```bash
+apt install linux-headers-$(uname -r)   # if not already installed
+dkms install nvidia/580.105.08 -k $(uname -r)
+modprobe nvidia
+nvidia-smi
+```
+
+**Do NOT use `dkms remove --all`** — that nukes working builds for other
+kernel versions too.
+
+**Prevention:** After any `apt upgrade` that bumps the kernel, verify
+`dkms status` shows the new kernel version before rebooting into it.
+
+---

@@ -23,23 +23,34 @@ def _resolve(base_dir: str, rel_path: str) -> Path:
 
 @task
 def ha_voice_benchmark(
-    test_data: str = "sample_test_data/small_test_cases.ndjson",
+    test_cases: str = "sample_test_data/small-test-cases.ndjson",
+    inventory: str = "sample_test_data/small-ha-entities.yaml",
     base_dir: str = ".",
-    tool_tier: str = "mvp",
+    instructions_file: str = "",
 ) -> Task:
     """HA voice intent benchmarking task.
 
     Args:
-        test_data: Path to NDJSON test case file (resolved relative to base_dir).
+        test_cases: Path to NDJSON test case file (resolved relative to base_dir).
+        inventory: Path to the HA entities YAML for this run (resolved relative to base_dir).
         base_dir: Base directory for resolving relative paths (relative paths are
             anchored to the repo root, not CWD, to survive Inspect's module loading).
-        tool_tier: Which tool set to expose — 'mvp' or 'full'.
+        instructions_file: Optional repo-relative path to a plain-text file containing
+            custom system prompt instructions. If empty, the default HA prompt is used.
     """
+    instructions: str | None = None
+    if instructions_file:
+        instructions = (_REPO_ROOT / instructions_file).read_text()
+
     return Task(
-        dataset=load_ha_test_cases(_resolve(base_dir, test_data)),
+        dataset=load_ha_test_cases(_resolve(base_dir, test_cases)),
         solver=[
-            use_tools(*get_ha_intent_tools(tool_tier)),
-            ha_voice_solver(base_dir=str(_resolve(base_dir, ""))),
+            use_tools(*get_ha_intent_tools()),
+            ha_voice_solver(
+                inventory=str(_resolve(base_dir, inventory)),
+                base_dir=str(_resolve(base_dir, "")),
+                instructions=instructions,
+            ),
         ],
-        scorer=tool_call_scorer(tier=tool_tier),
+        scorer=tool_call_scorer(),
     )

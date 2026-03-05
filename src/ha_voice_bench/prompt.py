@@ -36,6 +36,7 @@ def build_system_prompt(
     inventory_file: str,
     base_dir: str = ".",
     include_timestamp: bool = True,
+    instructions: str | None = None,
 ) -> str:
     """Assemble the full HA system prompt with entity inventory.
 
@@ -46,6 +47,7 @@ def build_system_prompt(
         inventory_file: Relative path to inventory YAML file.
         base_dir: Base directory for resolving relative paths.
         include_timestamp: Whether to include date/time (default True).
+        instructions: Custom instruction text. If None, DEFAULT_INSTRUCTIONS is used.
 
     Returns:
         Complete system prompt string.
@@ -53,7 +55,7 @@ def build_system_prompt(
     entity_context = _load_and_format_inventory(inventory_file, base_dir)
 
     parts = [
-        DEFAULT_INSTRUCTIONS,
+        instructions if instructions is not None else DEFAULT_INSTRUCTIONS,
         "",
         "An overview of the areas and the devices in this smart home:",
         entity_context,

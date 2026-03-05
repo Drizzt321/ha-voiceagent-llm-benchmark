@@ -8,9 +8,13 @@ analyze the resulting `.eval` log files. Usable from the project repo root.
 ## Prerequisites
 
 - Python 3.13+, `uv` installed
-- A running llama.cpp server (or any OpenAI-compatible endpoint with tool-call support)
-- `.env` configured with `OPENAI_BASE_URL` pointing at your server
 - Dependencies installed: `uv sync --extra dev`
+
+**For manual / interactive runs:** a running llama.cpp server (or any OpenAI-compatible endpoint
+with tool-call support) and `.env` configured with `OPENAI_BASE_URL` pointing at your server.
+
+**For orchestration runs:** SSH access to the llama.cpp host (key-based auth); the script
+manages server start/stop automatically and does not need `.env`.
 
 See `docs/user-setup.md` for full setup instructions.
 
@@ -53,7 +57,155 @@ uv run inspect eval src/ha_voice_bench/task.py \
   --sample-id small-HassTurnOn-light-kitchen_ceiling-001
 ```
 
-### Automated / matrix orchestration run
+### Automated matrix run — orchestration script
+
+The orchestration script handles the full benchmark matrix: SSH-ing to the llama.cpp host,
+cycling through models / hardware modes / context sizes, and running all tiers for each
+configuration automatically.
+
+**First-time SSH setup** (required once):
+```bash
+ssh-copy-id <your-user>@<your-llama-host>
+```
+
+**Configure your run** — copy the example config and edit for your environment:
+```bash
+cp configs/benchmark.example.yaml configs/my-run.yaml
+# Edit: server.llama_cpp_dir, models list, tiers, hardware_modes
+```
+
+**Run the matrix:**
+```bash
+uv run scripts/run_benchmark.py configs/my-run.yaml
+
+# Preview without running anything:
+uv run scripts/run_benchmark.py configs/my-run.yaml --dry-run
+
+# Resume after an interruption — point at the existing run directory:
+uv run scripts/run_benchmark.py --resume logs/my-run/2026-03-04T15-30-00
+
+# Skip warmup (e.g. server was already warm from a previous run):
+uv run scripts/run_benchmark.py configs/my-run.yaml --no-warmup
+
+# Limit warmup to first N samples instead of all of sample_test_data/:
+uv run scripts/run_benchmark.py configs/my-run.yaml --warmup-samples 5
+```
+
+**Output structure** — each invocation creates a timestamped directory under `logs/<config-stem>/`:
+
+```
+logs/
+  my-run/                                     ← config file stem
+    2026-03-04T15-30-00/                      ← this run (local timestamp)
+      my-run.yaml                             ← copy of config as used (audit trail)
+      orchestration.log                       ← full SSH/server/eval debug log
+      warmup/                                 ← warmup evals (excluded from analysis)
+        qwen2.5-7b-Q4_K_M-gpu-ctx32768/
+          *.eval
+      qwen2.5-7b-Q4_K_M-gpu-ctx32768/        ← one subdir per server config
+        2026-03-04T...ha-voice-benchmark.eval
+      qwen2.5-7b-Q4_K_M-cpu-ctx32768/
+        2026-03-04T...ha-voice-benchmark.eval
+    2026-03-05T10-00-00/                      ← a later run of the same config
+      my-run.yaml                             ← may differ — detectable by diff
+      ...
+```
+
+Runs of the same config are grouped together for easy comparison. The config copy inside
+each run dir means you can always tell exactly what was run, even if you later edit the file.
+
+**Warmup** — after each server start, the script runs a short eval against
+`sample_test_data/` to prime GPU kernels and KV cache before benchmark timing begins.
+This ensures the first benchmark sample isn't an outlier. Warmup runs ~80 samples by
+default (~2 min); set `warmup_samples: 5` in config for a faster warmup if your hardware
+warms up quickly. Warmup `.eval` logs are saved under `warmup/` and excluded from analysis.
+
+Config options (all optional — defaults shown):
+```yaml
+# warmup_samples: 5    # limit warmup to first N samples; omit for all (~80, ~2min)
+```
+
+CLI overrides:
+```
+--no-warmup           skip warmup entirely
+--warmup-samples N    override warmup sample count
+```
+
+**End-of-run summary** prints operational stats: total wall time, per-model timing, avg
+latency per sample. Accuracy and failure analysis is left to the analysis step (see below).
+
+---
+
+### AI-assisted analysis
+
+Once a run completes, hand the run directory to a Claude Code session. The session reads the
+`.eval` zip files directly — each contains per-sample JSON with scores, explanations,
+metadata, timing, and token counts.
+
+**Finding the run directory** — the orchestrator prints it at startup:
+```
+Run dir:      logs/my-run/2026-03-04T15-30-00/
+```
+
+Or list recent runs:
+```bash
+ls -lt logs/my-run/        # most recent at top
+```
+
+**Prompt to start a single-run analysis:**
+```
+I've just completed a benchmark run. The run directory is:
+  logs/my-run/2026-03-04T15-30-00/
+
+It contains:
+- my-run.yaml           the config used
+- orchestration.log     server/SSH event log
+- One subdirectory per model/hw/ctx config, each with a .eval log file
+
+See docs/ha-benchmark-run-and-analysis.md for how to read .eval files and what to look for.
+
+Please analyze this run:
+
+Accuracy:
+- Read my-run.yaml to understand which models, tiers, and hardware modes were tested
+- For each .eval file, extract overall accuracy and per-dimension failure counts
+- Identify dominant failure patterns (F1–F9 from docs/failure-patterns.md)
+- Summarize findings in the format described in Step 5 of the analysis guide
+- Update docs/failure-patterns.md with any new observations
+
+Latency and throughput:
+- From header["stats"], extract total_time, model_usage (input/output tokens)
+- From each sample in samples/*.json, extract total_time and model_usage.input_tokens
+- Compute: min/mean/max per-sample latency, and tokens-per-second (output tokens / time)
+- Plot or tabulate: input token count vs latency to show the scaling relationship
+- If multiple configs are present (gpu vs cpu, different ctx sizes), compare latency across them
+- Flag any samples with unusually high latency (outliers) and note what was different about them
+  (e.g. longer utterance, more complex tool call, retry)
+```
+
+**Prompt to compare two runs** (e.g. before/after a prompt change):
+```
+I have two benchmark runs to compare:
+  Run A (baseline):     logs/my-run/2026-03-04T15-30-00/
+  Run B (after change): logs/my-run/2026-03-05T10-00-00/
+
+Both ran the same config (my-run.yaml). Compare them:
+
+Accuracy:
+- Accuracy delta per tier and model
+- Which samples flipped C→I (regressions) and I→C (improvements)
+- Whether the failure pattern distribution shifted
+- Your assessment of whether the change was net positive
+
+Latency:
+- Mean per-sample latency for each run (from samples/*.json total_time)
+- Did the change affect throughput? (tokens/sec from model_usage)
+- Any new latency outliers introduced or resolved?
+```
+
+Claude Code reads the `.eval` zip files directly. See the Log File Format section for structure.
+
+### Manual / single-tier run (legacy)
 
 ```bash
 uv run inspect eval src/ha_voice_bench/task.py \
@@ -88,7 +240,10 @@ the utterance, expected vs. actual tool calls, and the per-dimension score break
 
 ## Log File Format
 
-Every run produces a `.eval` file in `./logs/`. These are zip archives containing:
+Every eval run produces a `.eval` file. Orchestration runs place them at
+`logs/<cfg-stem>/<timestamp>/<model>-<quant>-<hw>-ctx<N>/<timestamp>.eval`.
+Manual runs place them directly in whatever `--log-dir` was specified.
+These are zip archives containing:
 
 ```
 header.json                         ← Run metadata, config, overall results
@@ -180,16 +335,19 @@ running from the repo root. Humans can follow the same steps manually.
 
 ### Step 1 — Find the log to analyze
 
-List available logs:
-
+List runs for a given config, most recent first:
 ```bash
-ls -lt logs/*.eval | head -20
+ls -lt logs/my-run/
 ```
 
-Or find the most recent:
-
+List all `.eval` files across all runs, most recent first:
 ```bash
-ls -t logs/*.eval | head -1
+find logs -name "*.eval" -printf "%T@ %p\n" | sort -rn | head -20 | awk '{print $2}'
+```
+
+List `.eval` files within a specific run:
+```bash
+find logs/my-run/2026-03-04T15-30-00 -name "*.eval"
 ```
 
 ### Step 2 — Extract the summary data
@@ -198,6 +356,8 @@ ls -t logs/*.eval | head -1
 import zipfile
 import json
 
+# Orchestration: logs/<cfg-stem>/<timestamp>/<model>-<quant>-<hw>-ctx<N>/<timestamp>.eval
+# Manual:        logs/<timestamp>.eval  (or whatever --log-dir was set to)
 log_path = "logs/<chosen>.eval"
 with zipfile.ZipFile(log_path) as z:
     header = json.loads(z.read("header.json"))
@@ -318,8 +478,8 @@ def accuracy(summaries):
     scores = [s["scores"]["tool_call_scorer"]["value"] for s in summaries]
     return scores.count("C") / len(scores)
 
-before = load_summaries("logs/run-A.eval")
-after  = load_summaries("logs/run-B.eval")
+before = load_summaries("logs/my-run/2026-03-04T15-30-00/qwen2.5-7b-Q4_K_M-gpu-ctx32768/<timestamp>.eval")
+after  = load_summaries("logs/my-run/2026-03-05T10-00-00/qwen2.5-7b-Q4_K_M-gpu-ctx32768/<timestamp>.eval")
 
 print(f"Before: {accuracy(before):.1%}")
 print(f"After:  {accuracy(after):.1%}")
@@ -366,9 +526,21 @@ When comparing runs across tiers (small → medium → large → enormous), look
 
 ### Latency
 
-Per-sample timing is in the full sample JSON (`samples/<id>.json`), in the `total_time` and
-`working_time` fields. `header["stats"]` has aggregate timing. Latency comparisons across
-model configurations only make sense when `--max-connections 1` was used (serial execution).
+Key fields:
+- `header["stats"]["total_time"]` — wall time for the full eval
+- `header["stats"]["model_usage"]` — aggregate input/output token counts
+- `samples/<id>.json["total_time"]` — per-sample wall time in seconds
+- `samples/<id>.json["model_usage"]["input_tokens"]` — per-sample input token count
+
+Useful derived metrics:
+- **Tokens/sec** = output tokens / total_time (throughput, comparable across hw modes)
+- **Latency vs input tokens** — plot or bin samples by input token count; slope reveals
+  prefill cost scaling (larger inventory → more tokens → higher latency)
+- **Outliers** — samples with latency > 2× mean; often caused by retries or unusually
+  long responses
+
+Latency comparisons across model configurations only make sense when `--max-connections 1`
+was used (serial execution). Concurrent runs skew per-call timing.
 
 ---
 
@@ -398,6 +570,59 @@ print("Output:", sample["output"])
 
 3. The `attachments` key in a sample contains the rendered system prompt as sent to the model.
    Compare it against `docs/ha-prompt-reference.md` to verify the prompt was built correctly.
+
+---
+
+## Prompt Reference
+
+### Default instructions
+
+The benchmark uses HA's `DEFAULT_INSTRUCTIONS_PROMPT` verbatim as the system prompt
+instructions. This is the same text the real Home Assistant conversation agent sends to the
+model. It is defined in `src/ha_voice_bench/prompt.py`:
+
+```
+You are a voice assistant for Home Assistant.
+Answer questions about the world truthfully.
+Answer in plain text. Keep it simple and to the point.
+When controlling Home Assistant always call the intent tools.
+Use HassTurnOn to lock and HassTurnOff to unlock a lock.
+When controlling a device, prefer passing just name and domain.
+When controlling an area, prefer passing just area name and domain.
+When a user asks to turn on all devices of a specific type, ask user to specify an area, unless there is only one device of that type.
+```
+
+The entity inventory and a fixed timestamp are appended after these instructions to form the
+complete system prompt.
+
+### Custom prompt experiments
+
+To try a prompt variation, create a plain-text file containing your replacement instructions
+and point the config at it:
+
+```yaml
+# configs/my-experiment.yaml
+instructions_file: configs/prompts/f1-mitigation.txt
+```
+
+```
+# configs/prompts/f1-mitigation.txt
+You are a voice assistant for Home Assistant.
+Answer questions about the world truthfully.
+Answer in plain text. Keep it simple and to the point.
+When controlling Home Assistant always call the intent tools.
+Use HassTurnOn to lock and HassTurnOff to unlock a lock.
+When controlling a device, prefer passing just name and domain.
+When controlling an area, prefer passing just area name and domain.
+When a user asks to turn on all devices of a specific type, ask user to specify an area, unless there is only one device of that type.
+Always use the friendly name from the `names:` field — never use the entity ID as a name.
+```
+
+The path is repo-relative. Omit `instructions_file` entirely to use the default HA prompt.
+
+Each prompt variant should get its own config file so runs are self-contained and
+reproducible. The config is copied into the run directory, so the exact prompt file path
+used is recorded alongside the `.eval` logs.
 
 ---
 

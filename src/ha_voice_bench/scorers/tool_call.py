@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 # A model calling a name outside the active tier's set is flagged as hallucinating
 # (it was never told that tool exists in this eval context).
 
-VALID_TOOL_NAMES_MVP = {
+VALID_TOOL_NAMES = {
+    # Core device control
+    "HassToggle",
     "HassTurnOn",
     "HassTurnOff",
     "HassLightSet",
@@ -25,14 +27,12 @@ VALID_TOOL_NAMES_MVP = {
     "HassGetState",
     "HassClimateSetTemperature",
     "HassClimateGetTemperature",
+    # Utility
     "HassGetCurrentTime",
     "HassGetCurrentDate",
     "HassGetWeather",
     "HassNevermind",
-}
-
-VALID_TOOL_NAMES_FULL = VALID_TOOL_NAMES_MVP | {
-    # Tier 2: Media
+    # Media
     "HassMediaPause",
     "HassMediaUnpause",
     "HassMediaNext",
@@ -42,7 +42,7 @@ VALID_TOOL_NAMES_FULL = VALID_TOOL_NAMES_MVP | {
     "HassMediaPlayerUnmute",
     "HassSetVolumeRelative",
     "HassMediaSearchAndPlay",
-    # Tier 3: Household
+    # Household
     "HassFanSetSpeed",
     "HassVacuumStart",
     "HassVacuumReturnToBase",
@@ -52,31 +52,19 @@ VALID_TOOL_NAMES_FULL = VALID_TOOL_NAMES_MVP | {
     "HassListCompleteItem",
     "HassShoppingListAddItem",
     "HassShoppingListCompleteItem",
-    # Tier 5: Additional utility
+    # Additional utility
     "HassRespond",
     "HassBroadcast",
 }
 
-C = "C"  # Correct
-I = "I"  # Incorrect
-N = "N"  # Not applicable
+CORRECT = "C"
+INCORRECT = "I"
+NOT_APPLICABLE = "N"
 
 
 @scorer(metrics=[accuracy()])
-def tool_call_scorer(tier: str = "mvp") -> Scorer:
-    """Score model tool calls against expected tool calls.
-
-    Args:
-        tier: Tool tier used in the eval — 'mvp' or 'full'. Controls which tool
-            names are considered valid for hallucination detection.
-    """
-    if tier == "full":
-        valid_names = VALID_TOOL_NAMES_FULL
-    elif tier == "mvp":
-        valid_names = VALID_TOOL_NAMES_MVP
-    else:
-        raise ValueError(f"Unknown tool tier: {tier}")
-
+def tool_call_scorer() -> Scorer:
+    """Score model tool calls against expected tool calls."""
     async def score(state: TaskState, target: Target) -> Score:
         try:
             expected_calls = json.loads(target.text)
@@ -87,14 +75,14 @@ def tool_call_scorer(tier: str = "mvp") -> Scorer:
         actual_calls = _extract_tool_calls(state)
         expected_type = state.metadata.get("expected_response_type", "action_done")
 
-        results = _score_dimensions(expected_calls, actual_calls, expected_type, valid_names)
-        applicable = {k: v for k, v in results.items() if v != N}
-        overall = C if all(v == C for v in applicable.values()) else I
+        results = _score_dimensions(expected_calls, actual_calls, expected_type, VALID_TOOL_NAMES)
+        applicable = {k: v for k, v in results.items() if v != NOT_APPLICABLE}
+        overall = CORRECT if all(v == CORRECT for v in applicable.values()) else INCORRECT
 
         # If primary fails, try each alternative expected call set.
         match_quality = "optimal"
         match_reason = ""
-        if overall == I:
+        if overall == INCORRECT:
             raw = state.metadata.get("alternative_expected_tool_calls", [])
             alternatives: list[dict | list] = json.loads(raw) if isinstance(raw, str) else raw
             for alt in alternatives:
@@ -107,10 +95,10 @@ def tool_call_scorer(tier: str = "mvp") -> Scorer:
                     alt_calls = alt
                     alt_quality = "acceptable"
                     alt_reason = ""
-                alt_results = _score_dimensions(alt_calls, actual_calls, expected_type, valid_names)
-                alt_applicable = {k: v for k, v in alt_results.items() if v != N}
-                if all(v == C for v in alt_applicable.values()):
-                    overall = C
+                alt_results = _score_dimensions(alt_calls, actual_calls, expected_type, VALID_TOOL_NAMES)
+                alt_applicable = {k: v for k, v in alt_results.items() if v != NOT_APPLICABLE}
+                if all(v == CORRECT for v in alt_applicable.values()):
+                    overall = CORRECT
                     results = alt_results
                     match_quality = alt_quality
                     match_reason = alt_reason
@@ -179,7 +167,7 @@ def _check_response_type(
 ) -> str:
     """Check if the model's response matches the expected response type."""
     if expected_type == "action_done":
-        return C if actual_calls else I
+        return CORRECT if actual_calls else INCORRECT
     if expected_type == "query_response":
         query_tools = {
             "HassGetState",
@@ -188,42 +176,42 @@ def _check_response_type(
             "HassGetCurrentTime",
             "HassGetCurrentDate",
         }
-        return C if any(c.get("name") in query_tools for c in actual_calls) else I
+        return CORRECT if any(c.get("name") in query_tools for c in actual_calls) else INCORRECT
     if expected_type == "text_response":
-        return C if not actual_calls else I
+        return CORRECT if not actual_calls else INCORRECT
     if expected_type in {"error", "clarification"}:
-        return C if not actual_calls else I
-    return N
+        return CORRECT if not actual_calls else INCORRECT
+    return NOT_APPLICABLE
 
 
 def _check_format_validity(actual_calls: list[dict]) -> str:
     """Check if all tool calls are well-formed."""
     if not actual_calls:
-        return N
+        return NOT_APPLICABLE
     for call in actual_calls:
         if not call.get("name"):
-            return I
+            return INCORRECT
         if "_raw" in call.get("arguments", {}):
-            return I
-    return C
+            return INCORRECT
+    return CORRECT
 
 
 def _check_call_count(expected_calls: list[dict], actual_calls: list[dict]) -> str:
     """Check if the number of tool calls matches."""
     if not expected_calls and not actual_calls:
-        return C
-    return C if len(expected_calls) == len(actual_calls) else I
+        return CORRECT
+    return CORRECT if len(expected_calls) == len(actual_calls) else INCORRECT
 
 
 def _check_tool_names(expected_calls: list[dict], actual_calls: list[dict]) -> str:
     """Check if the correct tool(s) were called (order-independent)."""
     if not expected_calls:
-        return N
+        return NOT_APPLICABLE
     if not actual_calls:
-        return I
+        return INCORRECT
     expected_names = sorted(c["name"] for c in expected_calls)
     actual_names = sorted(c.get("name") for c in actual_calls)
-    return C if expected_names == actual_names else I
+    return CORRECT if expected_names == actual_names else INCORRECT
 
 
 def _check_arguments(expected_calls: list[dict], actual_calls: list[dict]) -> str:
@@ -233,9 +221,9 @@ def _check_arguments(expected_calls: list[dict], actual_calls: list[dict]) -> st
     Supports _any_of suffix for flexible matching.
     """
     if not expected_calls:
-        return N
+        return NOT_APPLICABLE
     if len(expected_calls) != len(actual_calls):
-        return I
+        return INCORRECT
 
     unmatched = list(range(len(actual_calls)))
     for exp in expected_calls:
@@ -246,8 +234,8 @@ def _check_arguments(expected_calls: list[dict], actual_calls: list[dict]) -> st
                 matched = True
                 break
         if not matched:
-            return I
-    return C
+            return INCORRECT
+    return CORRECT
 
 
 def _tool_call_matches(expected: dict, actual: dict) -> bool:
@@ -296,12 +284,12 @@ def _normalize(value: Any) -> str:
 def _check_no_hallucinated_tools(actual_calls: list[dict], valid_names: set[str]) -> str:
     """Check that only valid HA intent tools were called."""
     if not actual_calls:
-        return N
+        return NOT_APPLICABLE
     for call in actual_calls:
         name = call.get("name")
         if name and name not in valid_names:
-            return I
-    return C
+            return INCORRECT
+    return CORRECT
 
 
 def _serialize_actual_calls(actual_calls: list[dict]) -> list[dict]:
@@ -329,7 +317,10 @@ def _build_explanation(
         *[f"  {c.get('name', '?')}({c.get('arguments', {})})" for c in actual_calls],
         "",
         "Checks:",
-        *[f"  {'C' if v == C else ('I' if v == I else '-')} {k}: {v}" for k, v in results.items()],
+        *[
+            f"  {'C' if v == CORRECT else ('I' if v == INCORRECT else '-')} {k}: {v}"
+            for k, v in results.items()
+        ],
     ]
     return "\n".join(lines)
 
@@ -337,7 +328,7 @@ def _build_explanation(
 def _error_score(message: str) -> Score:
     """Return an error score when scoring fails."""
     return Score(
-        value=I,
+        value=INCORRECT,
         answer="",
         explanation=f"Scoring error: {message}",
     )

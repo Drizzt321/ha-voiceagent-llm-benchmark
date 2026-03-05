@@ -16,18 +16,22 @@ from .prompt import build_system_prompt
 
 
 @solver
-def ha_voice_solver(base_dir: str = ".") -> Solver:
+def ha_voice_solver(
+    inventory: str,
+    base_dir: str = ".",
+    instructions: str | None = None,
+) -> Solver:
     """Assemble HA-style prompt with entity inventory and generate.
 
     Args:
-        base_dir: Base directory for resolving inventory file paths.
+        inventory: Repo-relative path to the HA entities YAML for this run.
+        base_dir: Base directory for resolving the inventory path.
             Should be the repo root when running from CLI.
+        instructions: Custom instruction text. If None, the default HA prompt is used.
     """
 
     async def solve(state: TaskState, generate: Generate) -> TaskState:
-        inventory_file = state.metadata.get("inventory_file", "sample_test_data/small.yaml")
-
-        system_prompt = build_system_prompt(inventory_file, base_dir)
+        system_prompt = build_system_prompt(inventory, base_dir, instructions=instructions)
 
         state.messages.insert(0, ChatMessageSystem(content=system_prompt))
 

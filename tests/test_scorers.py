@@ -1,11 +1,10 @@
 """Tests for the Tier 1 tool-call scorer."""
 
 from ha_voice_bench.scorers.tool_call import (
-    C,
-    I,
-    N,
-    VALID_TOOL_NAMES_FULL,
-    VALID_TOOL_NAMES_MVP,
+    CORRECT,
+    INCORRECT,
+    NOT_APPLICABLE,
+    VALID_TOOL_NAMES,
     _build_explanation,
     _check_arguments,
     _check_call_count,
@@ -22,61 +21,61 @@ class TestToolNameCheck:
     def test_single_match(self):
         exp = [{"name": "HassTurnOn", "arguments": {}}]
         act = [{"name": "HassTurnOn", "arguments": {}}]
-        assert _check_tool_names(exp, act) == C
+        assert _check_tool_names(exp, act) == CORRECT
 
     def test_single_mismatch(self):
         exp = [{"name": "HassTurnOn", "arguments": {}}]
         act = [{"name": "HassTurnOff", "arguments": {}}]
-        assert _check_tool_names(exp, act) == I
+        assert _check_tool_names(exp, act) == INCORRECT
 
     def test_multi_match_order_independent(self):
         exp = [{"name": "HassTurnOff"}, {"name": "HassTurnOn"}]
         act = [{"name": "HassTurnOn"}, {"name": "HassTurnOff"}]
-        assert _check_tool_names(exp, act) == C
+        assert _check_tool_names(exp, act) == CORRECT
 
     def test_no_expected_returns_na(self):
-        assert _check_tool_names([], []) == N
+        assert _check_tool_names([], []) == NOT_APPLICABLE
 
     def test_expected_but_none_actual(self):
         exp = [{"name": "HassTurnOn"}]
-        assert _check_tool_names(exp, []) == I
+        assert _check_tool_names(exp, []) == INCORRECT
 
 
 class TestArgumentCheck:
     def test_exact_match(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Light", "domain": ["light"]}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Light", "domain": ["light"]}}]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
     def test_case_insensitive(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name": "kitchen light"}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Light"}}]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
     def test_any_of_match(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name_any_of": ["Kitchen Light", "Kitchen Ceiling"]}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
     def test_any_of_miss(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name_any_of": ["Kitchen Light", "Kitchen Ceiling"]}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Bedroom Light"}}]
-        assert _check_arguments(exp, act) == I
+        assert _check_arguments(exp, act) == INCORRECT
 
     def test_numeric_match(self):
         exp = [{"name": "HassLightSet", "arguments": {"brightness": 50}}]
         act = [{"name": "HassLightSet", "arguments": {"brightness": 50}}]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
     def test_empty_expected_args(self):
         exp = [{"name": "HassTurnOff", "arguments": {}}]
         act = [{"name": "HassTurnOff", "arguments": {"name": "Anything"}}]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
     def test_missing_actual_arg(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name": "Light"}}]
         act = [{"name": "HassTurnOn", "arguments": {}}]
-        assert _check_arguments(exp, act) == I
+        assert _check_arguments(exp, act) == INCORRECT
 
     def test_multi_call_order_independent(self):
         exp = [
@@ -87,94 +86,92 @@ class TestArgumentCheck:
             {"name": "HassTurnOn", "arguments": {"name": "Front Door Lock", "domain": ["lock"]}},
             {"name": "HassTurnOff", "arguments": {"domain": ["light"]}},
         ]
-        assert _check_arguments(exp, act) == C
+        assert _check_arguments(exp, act) == CORRECT
 
 
 class TestCallCount:
     def test_match(self):
-        assert _check_call_count([{"name": "A"}], [{"name": "B"}]) == C
+        assert _check_call_count([{"name": "A"}], [{"name": "B"}]) == CORRECT
 
     def test_mismatch(self):
-        assert _check_call_count([{"name": "A"}], []) == I
+        assert _check_call_count([{"name": "A"}], []) == INCORRECT
 
     def test_both_empty(self):
-        assert _check_call_count([], []) == C
+        assert _check_call_count([], []) == CORRECT
 
 
 class TestResponseType:
     def test_action_done_with_calls(self):
-        assert _check_response_type("action_done", [{"name": "X"}], [{"name": "Y"}]) == C
+        assert _check_response_type("action_done", [{"name": "X"}], [{"name": "Y"}]) == CORRECT
 
     def test_action_done_no_calls(self):
-        assert _check_response_type("action_done", [{"name": "X"}], []) == I
+        assert _check_response_type("action_done", [{"name": "X"}], []) == INCORRECT
 
     def test_error_no_calls(self):
-        assert _check_response_type("error", [], []) == C
+        assert _check_response_type("error", [], []) == CORRECT
 
     def test_error_with_calls(self):
-        assert _check_response_type("error", [], [{"name": "X"}]) == I
+        assert _check_response_type("error", [], [{"name": "X"}]) == INCORRECT
 
     def test_clarification_no_calls(self):
-        assert _check_response_type("clarification", [], []) == C
+        assert _check_response_type("clarification", [], []) == CORRECT
 
     def test_query_with_get_state(self):
-        assert _check_response_type("query_response", [{}], [{"name": "HassGetState"}]) == C
+        assert _check_response_type("query_response", [{}], [{"name": "HassGetState"}]) == CORRECT
 
     def test_query_with_get_time(self):
-        assert _check_response_type("query_response", [{}], [{"name": "HassGetCurrentTime"}]) == C
+        assert _check_response_type("query_response", [{}], [{"name": "HassGetCurrentTime"}]) == CORRECT
 
     def test_text_response_no_calls(self):
-        assert _check_response_type("text_response", [], []) == C
+        assert _check_response_type("text_response", [], []) == CORRECT
 
     def test_text_response_with_calls(self):
-        assert _check_response_type("text_response", [], [{"name": "X"}]) == I
+        assert _check_response_type("text_response", [], [{"name": "X"}]) == INCORRECT
 
 
 class TestFormatValidity:
     def test_valid(self):
-        assert _check_format_validity([{"name": "X", "arguments": {}}]) == C
+        assert _check_format_validity([{"name": "X", "arguments": {}}]) == CORRECT
 
     def test_no_calls(self):
-        assert _check_format_validity([]) == N
+        assert _check_format_validity([]) == NOT_APPLICABLE
 
     def test_no_name(self):
-        assert _check_format_validity([{"name": None}]) == I
+        assert _check_format_validity([{"name": None}]) == INCORRECT
 
     def test_unparseable_args(self):
-        assert _check_format_validity([{"name": "X", "arguments": {"_raw": "bad"}}]) == I
+        assert _check_format_validity([{"name": "X", "arguments": {"_raw": "bad"}}]) == INCORRECT
 
 
 class TestHallucinatedTools:
-    def test_valid_tools_mvp(self):
+    def test_valid_tools(self):
         calls = [{"name": "HassTurnOn"}, {"name": "HassTurnOff"}]
-        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == C
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES) == CORRECT
 
-    def test_hallucinated_mvp(self):
+    def test_hallucinated_tool(self):
         calls = [{"name": "MadeUpTool"}]
-        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == I
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES) == INCORRECT
 
     def test_no_calls(self):
-        assert _check_no_hallucinated_tools([], VALID_TOOL_NAMES_MVP) == N
+        assert _check_no_hallucinated_tools([], VALID_TOOL_NAMES) == NOT_APPLICABLE
 
-    def test_full_tier_tool_valid_in_full(self):
-        # HassMediaPause is not in MVP but is valid in full
+    def test_media_tool_valid(self):
         calls = [{"name": "HassMediaPause"}]
-        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_FULL) == C
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES) == CORRECT
 
-    def test_full_tier_tool_hallucinated_in_mvp(self):
-        # Model called a real HA tool it wasn't told about in this eval context
-        calls = [{"name": "HassMediaPause"}]
-        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_MVP) == I
+    def test_toggle_valid(self):
+        calls = [{"name": "HassToggle"}]
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES) == CORRECT
 
-    def test_full_tier_names_superset_of_mvp(self):
-        assert VALID_TOOL_NAMES_MVP <= VALID_TOOL_NAMES_FULL
+    def test_valid_tool_names_count(self):
+        assert len(VALID_TOOL_NAMES) == 32
 
-    def test_full_tier_has_31_tools(self):
-        assert len(VALID_TOOL_NAMES_FULL) == 31
+    def test_toggle_is_valid(self):
+        assert "HassToggle" in VALID_TOOL_NAMES
 
     def test_made_up_tool_always_hallucinated(self):
         calls = [{"name": "HassDoMagic"}]
-        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES_FULL) == I
+        assert _check_no_hallucinated_tools(calls, VALID_TOOL_NAMES) == INCORRECT
 
 
 class TestToolCallMatches:
@@ -199,16 +196,16 @@ class TestScoreDimensions:
     def test_all_correct(self):
         exp = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
         act = [{"name": "HassTurnOn", "arguments": {"name": "Kitchen Ceiling"}}]
-        r = _score_dimensions(exp, act, "action_done", VALID_TOOL_NAMES_MVP)
-        assert r["tool_name"] == C
-        assert r["args"] == C
+        r = _score_dimensions(exp, act, "action_done", VALID_TOOL_NAMES)
+        assert r["tool_name"] == CORRECT
+        assert r["args"] == CORRECT
         assert "overall" not in r  # overall computed by caller, not returned here
 
     def test_wrong_tool(self):
         exp = [{"name": "HassClimateGetTemperature", "arguments": {}}]
         act = [{"name": "HassGetState", "arguments": {}}]
-        r = _score_dimensions(exp, act, "query_response", VALID_TOOL_NAMES_MVP)
-        assert r["tool_name"] == I
+        r = _score_dimensions(exp, act, "query_response", VALID_TOOL_NAMES)
+        assert r["tool_name"] == INCORRECT
 
     def test_alternative_match(self):
         """Simulate the alternative matching loop used by the scorer with new object format."""
@@ -221,20 +218,27 @@ class TestScoreDimensions:
         actual = [{"name": "HassGetState", "arguments": {"name": "Hallway Temperature"}}]
 
         # Primary fails
-        primary_r = _score_dimensions(primary, actual, "query_response", VALID_TOOL_NAMES_MVP)
-        primary_applicable = {k: v for k, v in primary_r.items() if v != N}
-        assert not all(v == C for v in primary_applicable.values())
+        primary_r = _score_dimensions(primary, actual, "query_response", VALID_TOOL_NAMES)
+        primary_applicable = {k: v for k, v in primary_r.items() if v != NOT_APPLICABLE}
+        assert not all(v == CORRECT for v in primary_applicable.values())
 
         # Alternative (new object format) passes
         alt_calls = alt_obj["tool_calls"]
-        alt_r = _score_dimensions(alt_calls, actual, "query_response", VALID_TOOL_NAMES_MVP)
-        alt_applicable = {k: v for k, v in alt_r.items() if v != N}
-        assert all(v == C for v in alt_applicable.values())
+        alt_r = _score_dimensions(alt_calls, actual, "query_response", VALID_TOOL_NAMES)
+        alt_applicable = {k: v for k, v in alt_r.items() if v != NOT_APPLICABLE}
+        assert all(v == CORRECT for v in alt_applicable.values())
 
 
 class TestBuildExplanation:
     def _make_results(self) -> dict[str, str]:
-        return {"tool_name": C, "args": C, "call_count": C, "format_valid": C, "no_hallucinated_tools": C, "response_type": C}
+        return {
+            "tool_name": CORRECT,
+            "args": CORRECT,
+            "call_count": CORRECT,
+            "format_valid": CORRECT,
+            "no_hallucinated_tools": CORRECT,
+            "response_type": CORRECT,
+        }
 
     def test_optimal_quality_always_emitted(self):
         exp = [{"name": "HassTurnOn", "arguments": {}}]

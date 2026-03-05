@@ -24,9 +24,8 @@ Mapping conventions:
 Note: parameters are passed as ToolParams (not plain dicts) so ToolDef skips
 function-signature introspection — required because _noop uses **kwargs.
 
-Tiers:
-  mvp  — 7 core + 4 utility = 11 tools  (Milestone 1)
-  full — mvp + Tier 2 media (9) + Tier 3 household (9) + Tier 5 utility (2) = 31 tools
+All 32 tools are always exposed — matching real HA behaviour where all registered
+intents are available to the conversation agent.
 """
 
 from inspect_ai.tool import ToolDef
@@ -90,6 +89,16 @@ _SERVICE_SLOTS = ToolParams(
 
 
 # --- Core Device Control Tools ---
+
+HASS_TOGGLE = ToolDef(
+    tool=_make_noop(),
+    name="HassToggle",
+    description=(
+        "Toggles a device or entity between on and off states. "
+        "Use for requests like 'toggle' when the desired final state is not specified."
+    ),
+    parameters=_ENTITY_SLOTS,
+)
 
 HASS_TURN_ON = ToolDef(
     tool=_make_noop(),
@@ -478,7 +487,9 @@ HASS_BROADCAST = ToolDef(
 
 # --- Public API ---
 
-MVP_TOOLS = [
+ALL_TOOLS: list[ToolDef] = [
+    # Core device control
+    HASS_TOGGLE,
     HASS_TURN_ON,
     HASS_TURN_OFF,
     HASS_LIGHT_SET,
@@ -486,14 +497,12 @@ MVP_TOOLS = [
     HASS_GET_STATE,
     HASS_CLIMATE_SET_TEMPERATURE,
     HASS_CLIMATE_GET_TEMPERATURE,
+    # Utility
     HASS_GET_CURRENT_TIME,
     HASS_GET_CURRENT_DATE,
     HASS_GET_WEATHER,
     HASS_NEVERMIND,
-]
-
-FULL_TOOLS = MVP_TOOLS + [
-    # Tier 2: Media
+    # Media
     HASS_MEDIA_PAUSE,
     HASS_MEDIA_UNPAUSE,
     HASS_MEDIA_NEXT,
@@ -503,7 +512,7 @@ FULL_TOOLS = MVP_TOOLS + [
     HASS_MEDIA_PLAYER_UNMUTE,
     HASS_SET_VOLUME_RELATIVE,
     HASS_MEDIA_SEARCH_AND_PLAY,
-    # Tier 3: Household
+    # Household
     HASS_FAN_SET_SPEED,
     HASS_VACUUM_START,
     HASS_VACUUM_RETURN_TO_BASE,
@@ -513,20 +522,12 @@ FULL_TOOLS = MVP_TOOLS + [
     HASS_LIST_COMPLETE_ITEM,
     HASS_SHOPPING_LIST_ADD_ITEM,
     HASS_SHOPPING_LIST_COMPLETE_ITEM,
-    # Tier 5: Additional utility
+    # Additional utility
     HASS_RESPOND,
     HASS_BROADCAST,
 ]
 
 
-def get_ha_intent_tools(tier: str = "mvp") -> list[ToolDef]:
-    """Return HA intent tools for the benchmarking eval.
-
-    Args:
-        tier: Which tool set — 'mvp' (11 tools) or 'full' (31 tools).
-    """
-    if tier == "mvp":
-        return list(MVP_TOOLS)
-    if tier == "full":
-        return list(FULL_TOOLS)
-    raise ValueError(f"Unknown tool tier: {tier}")
+def get_ha_intent_tools() -> list[ToolDef]:
+    """Return all HA intent tools for the benchmarking eval."""
+    return list(ALL_TOOLS)

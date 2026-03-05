@@ -16,6 +16,11 @@ logs/*
 uv.lock
 HANDOFF.md
 
+# Assembled benchmark outputs (ephemeral — regenerate with scripts/assemble_tier.py).
+# Source files in test_data/inventories/ and test_data/test_cases/ are tracked.
+test_data/*.ndjson
+test_data/*.yaml
+
 # Directory contents excluded (may contain sensitive data).
 # The directories themselves are tracked via .gitkeep.
 # Sample/example files will be added explicitly with git add -f.

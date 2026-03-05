@@ -37,6 +37,13 @@ fits comfortably in 8 GB VRAM:
 bartowski/Qwen2.5-7B-Instruct-GGUF  →  Qwen2.5-7B-Instruct-Q4_K_M.gguf  (~4.4 GB)
 ```
 
+**Prefer bartowski's builds over the official Qwen repo.** bartowski uses imatrix-guided
+quantization, which calibrates the quantization using a representative dataset to minimise
+accuracy loss. The official `Qwen/Qwen2.5-7B-Instruct-GGUF` uses standard quantization and
+shows measurably lower benchmark accuracy at the same quant level (Q4_K_M). This difference
+likely applies across other model families too — prefer imatrix-quantized GGUFs where
+available.
+
 ### llama-server startup command
 
 ```bash
@@ -44,7 +51,7 @@ llama-server \
   -hf bartowski/Qwen2.5-7B-Instruct-GGUF \
   --host 0.0.0.0 \
   --port 8080 \
-  --ctx-size 8192 \
+  --ctx-size 32768 \
   --jinja \
   -ngl 99
 ```
@@ -52,7 +59,8 @@ llama-server \
 Key flags:
 - `--jinja` — **required** for tool calling; enables Jinja2 chat-template rendering
 - `-ngl 99` — offload all layers to GPU (set lower if you hit VRAM limits)
-- `--ctx-size 8192` — sufficient for the HA system prompt + a full test case
+- `--ctx-size 32768` — recommended; 8192 only covers the small tier (~6K tokens). Medium needs
+  ~9K, large ~13K, enormous ~26K. Use 32768 for full tier coverage on hardware that supports it.
 
 The server exposes an OpenAI-compatible API at `http://localhost:8080/v1` by default.
 
@@ -133,16 +141,61 @@ The `--display` flag controls what Inspect renders to the terminal during a run:
 | `conversation` | Shows each message turn rendered as text boxes. Useful for debugging prompt content at a real terminal. |
 | `none` | Suppresses all terminal output. Use in automated batch scripts where log files are the only record. |
 
-For **automated/scripted runs** (e.g. the matrix orchestration in Step 18), use `--display none`
+For **automated/scripted runs** (e.g. via the orchestration script `scripts/run_benchmark.py`), use `--display plain`
 combined with `--no-fail-on-error` and a run-specific `--log-dir`:
 
 ```bash
 uv run inspect eval src/ha_voice_bench/task.py \
   --model openai/local \
   --max-connections 1 \
-  --display none \
+  --display plain \
   --no-fail-on-error \
   --log-dir logs/my-run \
   --tags qwen2.5-7b q4_k_m gpu \
   --seed 42
 ```
+
+---
+
+## 6. Multi-model matrix runs (orchestration)
+
+For running a matrix of models × tiers × hardware modes automatically, use the orchestration
+script. It SSH-es to the llama.cpp host, starts/stops the server for each configuration, and
+collects `.eval` logs in structured subdirectories.
+
+```bash
+# Copy the example config and edit for your environment
+cp configs/benchmark.example.yaml configs/my-run.yaml
+
+# Preview what would run
+uv run scripts/run_benchmark.py configs/my-run.yaml --dry-run
+
+# Run the matrix
+uv run scripts/run_benchmark.py configs/my-run.yaml
+
+# Resume an interrupted run (reads config from inside the run dir)
+uv run scripts/run_benchmark.py --resume logs/my-run/2026-03-04T14-30-00
+```
+
+Requires key-based SSH access to the llama.cpp host (set up with `ssh-copy-id` if needed).
+
+### Warmup
+
+After each server start, the orchestrator runs a short eval against `sample_test_data/` to
+prime GPU kernels and the KV cache before benchmark timing begins. This is enabled by default.
+
+**Config option** (in your `my-run.yaml`):
+```yaml
+# warmup_samples: 5   # limit warmup to first N samples; omit to run all (~80 cases, ~2 min)
+```
+
+**CLI flags** (override config):
+```bash
+--no-warmup              # disable warmup entirely
+--warmup-samples N       # limit warmup to first N samples (e.g. 5 is usually sufficient)
+```
+
+Warmup logs land in `logs/<cfg-name>/<timestamp>/warmup/<server-config>/`.
+
+See `docs/ha-benchmark-run-and-analysis.md` for the full orchestration workflow and how to
+analyze the resulting `.eval` logs.

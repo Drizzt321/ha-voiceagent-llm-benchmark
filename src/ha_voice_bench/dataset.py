@@ -11,7 +11,6 @@ REQUIRED_FIELDS = {
     "expected_tool_calls",
     "expected_response_type",
     "inventory_tier",
-    "inventory_file",
 }
 
 
@@ -57,7 +56,6 @@ def load_ha_test_cases(
 
             metadata: dict = {
                 "inventory_tier": case["inventory_tier"],
-                "inventory_file": case["inventory_file"],
                 "expected_response_type": case["expected_response_type"],
             }
             if "alternative_expected_tool_calls" in case:

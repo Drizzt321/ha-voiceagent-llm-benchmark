@@ -14,34 +14,33 @@ class TestLoadBasic:
     """Basic loading and structure tests."""
 
     def test_load_returns_samples(self):
-        dataset = load_ha_test_cases(SAMPLE_DATA / "sample_test_cases.ndjson")
+        dataset = load_ha_test_cases(SAMPLE_DATA / "small-test-cases.ndjson")
         samples = list(dataset)
         assert len(samples) > 0
 
     def test_sample_has_required_fields(self):
-        dataset = load_ha_test_cases(SAMPLE_DATA / "sample_test_cases.ndjson")
+        dataset = load_ha_test_cases(SAMPLE_DATA / "small-test-cases.ndjson")
         s = list(dataset)[0]
         assert s.id is not None
         assert s.input
         assert s.target
         assert "inventory_tier" in s.metadata
-        assert "inventory_file" in s.metadata
         assert "expected_response_type" in s.metadata
 
     def test_correlation_id_preserved(self):
-        dataset = load_ha_test_cases(SAMPLE_DATA / "sample_test_cases.ndjson")
+        dataset = load_ha_test_cases(SAMPLE_DATA / "small-test-cases.ndjson")
         ids = [s.id for s in dataset]
         assert any("HassTurnOn" in id_ for id_ in ids)
 
     def test_target_is_valid_json_array(self):
-        dataset = load_ha_test_cases(SAMPLE_DATA / "sample_test_cases.ndjson")
+        dataset = load_ha_test_cases(SAMPLE_DATA / "small-test-cases.ndjson")
         for sample in dataset:
             parsed = json.loads(sample.target)
             assert isinstance(parsed, list)
 
     def test_metadata_prefixed(self):
         """Nested metadata keys get 'meta/' prefix."""
-        dataset = load_ha_test_cases(SAMPLE_DATA / "sample_test_cases.ndjson")
+        dataset = load_ha_test_cases(SAMPLE_DATA / "small-test-cases.ndjson")
         for sample in dataset:
             meta_keys = [k for k in sample.metadata if k.startswith("meta/")]
             assert len(meta_keys) > 0
@@ -51,17 +50,28 @@ class TestFiltering:
     """Tier filtering tests."""
 
     def test_filter_by_tier(self):
+        # Small fixture has both "small" and "all" (utility) tier cases.
+        # Filtering for "small" returns only the domain/cross-domain cases.
         dataset = load_ha_test_cases(
-            SAMPLE_DATA / "sample_test_cases.ndjson",
+            SAMPLE_DATA / "small-test-cases.ndjson",
             inventory_tier="small",
         )
         for sample in dataset:
             assert sample.metadata["inventory_tier"] == "small"
 
+    def test_filter_all_tier(self):
+        # "all" tier cases (utility/conversational) are inventory-independent.
+        dataset = load_ha_test_cases(
+            SAMPLE_DATA / "small-test-cases.ndjson",
+            inventory_tier="all",
+        )
+        for sample in dataset:
+            assert sample.metadata["inventory_tier"] == "all"
+
     def test_filter_nonexistent_tier_raises(self):
         with pytest.raises(ValueError, match="No test cases"):
             load_ha_test_cases(
-                SAMPLE_DATA / "sample_test_cases.ndjson",
+                SAMPLE_DATA / "small-test-cases.ndjson",
                 inventory_tier="nonexistent",
             )
 
