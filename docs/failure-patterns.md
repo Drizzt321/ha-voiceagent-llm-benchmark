@@ -15,6 +15,7 @@ The goal is to classify failures so we can:
 | ID | Name | Scorer dimension(s) affected |
 |----|------|-------------------------------|
 | F1 | Entity ID used instead of friendly name | `args` |
+| F1.partial | Partial/truncated friendly name | `args` |
 | F2 | Wrong tool for semantically similar intent | `tool_name`, `args` |
 | F3 | Hallucinated tool name | `no_hallucinated_tools` |
 | F4 | Missing required argument | `args` |
@@ -22,6 +23,8 @@ The goal is to classify failures so we can:
 | F6 | Wrong call count | `call_count` |
 | F7 | Wrong response type (called/didn't-call) | `response_type`, `call_count` |
 | F8 | Wrong domain filter | `args` |
+| F9 | Out-of-scope request mapped to nearest HA tool | `response_type` |
+| F10 | Prompt format incompatibility / model doesn't use tool calling | `response_type`, `tool_name`, `args` (all) |
 
 ---
 
@@ -212,6 +215,59 @@ fulfills the request within HA") may reduce this.
 > use bartowski unless noted otherwise.
 | 2026-03-04 | Qwen2.5-7B-Instruct Q4_K_M (CPU ngl=0 ctx32768) | small (80) | 80 | 57.5% (46/80) | F1×22, F5.area×11, F7×9, F4×4, F2×5 | Same seed; accuracy equivalent to GPU; 6.6× slower (9.47s mean vs 1.43s); 3 samples differ from GPU run (FP non-determinism) |
 
+**Multi-model comparison — Run 1: 2026-03-05 (multi-test.yaml, no targeted prompt, GPU, small+medium tiers)**
+
+| Date | Model | Quant | ctx | small (80) | medium (104) | Dominant failures | Notes |
+|------|-------|-------|-----|-----------|-------------|-------------------|-------|
+| 2026-03-05 | Qwen2.5-7B-Instruct | Q5_K_M | 32768 | **67.5%** (54/80) | **64.4%** (67/104) | F1, F5, F7 | Best overall; Q5 +5–11pp over Q4 |
+| 2026-03-05 | Qwen2.5-7B-Instruct | Q4_K_M | 32768 | 56.2% (45/80) | 53.8% (56/104) | F1, F5, F7 | Strong; same F1 pattern |
+| 2026-03-05 | functionally-small-3.1 | Q5_K_M | 20000 | 60.0% (48/80) | 46.2% (48/104) | F1, F5, args | Medium drop larger than Qwen |
+| 2026-03-05 | functionally-small-3.1 | Q4_K_M | 24000 | 56.2% (45/80) | 48.1% (50/104) | F1, F5, args | Comparable to Qwen2.5-7B-q4 on small |
+| 2026-03-05 | Qwen3-8B | Q4_K_M | 22000 | 52.5% (42/80) | 44.2% (46/104) | F1, F5, F2 | Extended thinking; 6–9× slower than Qwen2.5; no accuracy gain |
+| 2026-03-05 | functionally-small-3.1 | Q3_K_M | 32768 | 42.5% (34/80) | 36.5% (38/104) | F1, F5, args | Q3 loses ~15pp vs Q4 |
+| 2026-03-05 | Meta-Llama-3.1-8B-Instruct | Q4_K_M | 25000 | 32.5% (26/80) | 35.6% (37/104) | F1, F7, call_count | Flat across tiers; high call_count errors |
+| 2026-03-05 | phi4-mini-instruct | Q8_0 | 28000 | 22.5% (18/80) | ~2.6% (1/39)\* | F10 (no tool calls) | BROKEN: model does not use tool calling |
+| 2026-03-05 | Llama-3.2-3B-Instruct | F16 | 13000 | 15.0% (12/80) | 8.7% (9/104) | F1, F4, F5 | Near capability floor; high args failures |
+| 2026-03-05 | Llama-3.2-3B-Instruct | Q8_0 | 30000 | 11.2% (9/80) | 8.7% (9/104) | F1, F4, F5 | Equivalent to F16 at same tier |
+| 2026-03-05 | functionally-small-2.4 | Q4_0 | 28000 | 2.5% (2/80) | 0.0% (0/104) | F10 (random tools) | BROKEN: wrong tool format; see F10 |
+
+\* phi4 medium: partial run — 1 sample stalled 193.89s, no scorer recorded; run terminated at 39/40 samples.
+
+**Multi-model comparison — Run 2: 2026-03-05 (multi-test.yaml, `system_prompt_always_name.txt`, GPU, small+medium tiers)**
+
+Prompt: *"When controlling a device, always pass the friendly name from `names:` and the domain."*
+
+| Model | Quant | ctx | small (80) | medium (104) | Dominant failures | Notes |
+|-------|-------|-----|-----------|-------------|-------------------|-------|
+| Qwen3-8B | Q4_K_M | 22000 | 70.0% (56/80) | ~65% | F7, F2 | +17.5pp vs Run 1; thinking still active |
+| Meta-Llama-3.1-8B | Q4_K_M | 25000 | 58.8% (47/80) | ~52% | F1, F7 | +26.3pp vs Run 1; huge gain from name fix |
+| Qwen2.5-7B | Q5_K_M | 32768 | ~68% | ~65% | F1, F7 | Roughly flat vs Run 1 |
+| functionally-3.1 | Q4/Q5_K_M | 24/20K | ~56–60% | ~46–49% | F1, F2 | Roughly flat |
+
+**Multi-model comparison — Run 3: 2026-03-05 (multi-test_prompt_2, `system_prompt_always_no_think_2.txt`, GPU, small+medium tiers)**
+
+Prompt: *"When controlling a specific device, always use the friendly name from `names:` and the domain. When controlling an area, prefer passing just the area name and domain. /no_think"*
+
+| Model | Quant | ctx | small (80) | medium (104) | Dominant failures | Notes |
+|-------|-------|-----|-----------|-------------|-------------------|-------|
+| **Qwen3-8B** | Q4_K_M | 22000 | **81.2%** (65/80) | **71.2%** (74/104) | F7, other | New leader; `/no_think` restored normal latency (1.70s mean) |
+| Qwen2.5-7B | Q5_K_M | 32768 | 73.8% (59/80) | 68.3% (71/104) | F7, F1 | Best non-qwen3 |
+| Qwen2.5-7B | Q4_K_M | 32768 | 68.8% (55/80) | 67.3% (70/104) | F7, F1 | Consistent with q5 on medium |
+| functionally-3.1 | Q5_K_M | 20000 | 61.3% (49/80) | 58.7% (61/104) | F1, F2, F7 | F2 dominates medium (20 cases) |
+| functionally-3.1 | Q4_K_M | 24000 | 60.0% (48/80) | 52.9% (55/104) | F1, F2, F7 | F2 capability ceiling |
+| **Meta-Llama-3.1-8B** | Q4_K_M | 25000 | **47.5%** (38/80) | 49.0% (51/104) | F7, F1 | **Regression** −11.3pp vs Run 2; area clause confused model; 2×600s server hangs |
+
+**Three-run progression (small tier):**
+
+| Model | Run 1 (baseline) | Run 2 (+name-fix) | Run 3 (+area+nothink) | Total delta |
+|-------|-----------------|-------------------|-----------------------|-------------|
+| Qwen3-8B | 52.5% | 70.0% | **81.2%** | +28.7pp |
+| Meta-Llama-3.1-8B | 32.5% | **58.8%** | 47.5% | best at Run 2 |
+| Qwen2.5-7B Q5 | 67.5% | ~68% | **73.8%** | +6.3pp |
+| Qwen2.5-7B Q4 | 56.2% | ~57% | **68.8%** | +12.6pp |
+| functionally-3.1 Q5 | 60.0% | ~60% | **61.3%** | +1.3pp |
+| functionally-3.1 Q4 | 56.2% | ~56% | **60.0%** | +3.8pp |
+
 ---
 
 ## Latency Observations
@@ -309,6 +365,145 @@ statistically equivalent. The sample-level divergences are stochastic artefacts 
 different FP rounding paths, not systematic capability differences. For benchmarking
 accuracy, either hw mode is valid. For latency comparison across models, GPU is the
 reference since CPU throughput is more sensitive to host hardware.
+
+### Run C: 2026-03-05 / Multi-model comparison / GPU / small+medium tiers
+
+| Model | Tier | Min | Mean | p95 | Max | Wall (s) | TPS | iTok (mean) |
+|---|---|---|---|---|---|---|---|---|
+| llama3.2-3B Q8_0 | small | 0.29s | **1.09s** | 1.58s | 2.27s | 88s | 34.2 | 7,833 |
+| functionally-3.1 Q3_K_M | small | 0.39s | **1.07s** | 1.52s | 3.17s | 86s | 26.1 | 6,850 |
+| functionally-3.1 Q4_K_M | small | 0.39s | 1.27s | 1.66s | 20.33s | 102s | 27.0 | 6,850 |
+| functionally-3.1 Q5_K_M | small | 0.43s | 1.38s | 1.89s | 16.60s | 110s | 23.7 | 6,850 |
+| qwen2.5-7b Q4_K_M | small | 0.41s | 1.30s | 1.66s | 3.61s | 105s | 26.7 | 6,411 |
+| qwen2.5-7b Q5_K_M | small | 0.45s | 1.40s | 1.88s | 2.70s | 112s | 24.0 | 6,411 |
+| llama3.2-3B Q8_0 | medium | 0.44s | 1.24s | 1.65s | 7.04s | 130s | 29.9 | 10,248 |
+| functionally-3.1 Q3_K_M | medium | 0.30s | 1.25s | 1.57s | 11.16s | 130s | 22.8 | 9,265 |
+| meta-llama3.1-8B Q4_K_M | small | 0.62s | 1.23s | 1.74s | 2.40s | 99s | 27.3 | 7,836 |
+| meta-llama3.1-8B Q4_K_M | medium | 0.52s | 1.42s | 1.85s | 11.48s | 148s | 24.1 | 10,251 |
+| qwen2.5-7b Q4_K_M | medium | 0.55s | 1.97s | 2.26s | 23.83s | 206s | 17.7 | 8,872 |
+| qwen2.5-7b Q5_K_M | medium | 0.68s | 2.20s | 2.46s | 24.66s | 230s | 16.6 | 8,872 |
+| **qwen3-8b Q4_K_M** | **small** | **3.17s** | **9.56s** | **25.86s** | **47.58s** | **765s** | 29.6 | 6,411 |
+| **qwen3-8b Q4_K_M** | **medium** | **3.67s** | **12.02s** | **35.02s** | **77.08s** | **1250s** | 24.7 | 8,872 |
+
+**Qwen3-8B thinking mode:** Qwen3 uses extended chain-of-thought reasoning by default, generating
+700–1,800 output tokens per sample vs. ~30–100 for other models. Aggregate output tokens:
+22,631 (small) and 30,930 (medium) vs. ~2,600–4,800 for other models. Wall time is 6–9×
+higher than qwen2.5-7b-q5 with no accuracy advantage (52.5% vs 67.5% on small). If benchmarking
+this model, use `/no_think` in the system prompt or disable thinking via model config to get
+representative tool-call latency.
+
+**Outlier — `medium-HassGetState-binary_sensor-front_door-001` (first sample in medium runs):**
+
+Every model running the medium tier shows a 7–38s spike on this sample (vs 0.5–2s normally):
+output token counts are small (25–46), ruling out decode. This is a **cold-prefill spike** at
+~9–10K input tokens on a fresh KV cache — same artifact as the first-sample cold-start observed
+in small-tier runs. Strip the first medium-tier sample when computing latency stats or benchmarks.
+
+| Model | Spike | Output tok | Normal mean |
+|---|---|---|---|
+| functionally-3.1 (all quants) | 10–11s | 25–27 | ~1.25–1.31s |
+| llama3.2-3B Q8_0 | 7.0s | 46 | 1.24s |
+| meta-llama3.1-8B Q4_K_M | 11.5s | 29 | 1.42s |
+| qwen2.5-7b Q4_K_M | 23.8s | 37 | 1.97s |
+| qwen2.5-7b Q5_K_M | 24.7s | 37 | 2.20s |
+| qwen3-8b Q4_K_M | 37.6s | 228 | 12.02s |
+
+**Other notable outliers:**
+
+| Model / tier | Sample | Latency | Output tok | Cause |
+|---|---|---|---|---|
+| llama3.2-3B-f16 / medium | `all-text-ambiguous_intent-001` "it's getting dark" | **110.75s** | 2,810 | Unbounded prose/reasoning chain; decode bottleneck |
+| functionally-3.1-q4 / small | `all-text-conversational-capabilities-001` "what can you do" | 20.33s | 606 | Very verbose capability list; decode bottleneck |
+| phi4-mini / medium | `medium-HassSetVolume-media_player-sonos_bathroom` | **193.89s** | ? | Server stall/timeout; run terminated; no scorer entry |
+| qwen3-8b / medium | `medium-multi-office_all_off-001` | 77.08s | 1,843 | Thinking tokens for multi-entity complex request |
+| qwen3-8b / small | `small-multi-cover_light_bedroom-001` | 47.58s | 1,350 | Thinking tokens |
+
+**Input token vs latency (small vs medium):**
+Within a tier, latency variance is driven by output length, not input length (input is nearly
+constant per tier). Across tiers, mean latency increases 20–100% from small→medium (consistent
+with ~40% more input tokens + larger inventory search). Qwen3 shows smaller cross-tier latency
+growth because thinking tokens dominate decode time regardless of input size.
+
+**Best accuracy/latency tradeoff (Run C):** qwen2.5-7b Q5_K_M — 67.5% (small) / 64.4% (medium),
+1.40s mean, 24 TPS. Strongly preferred over qwen3-8b which is 6–9× slower for lower accuracy.
+
+### Run D: 2026-03-05 / Multi-model prompt_2 run / GPU / small+medium tiers
+
+Prompt: `system_prompt_always_no_think_2.txt` (`/no_think` + area/device distinction)
+
+| Model | Tier | Min | Mean | p95 | Max | Wall (s) | TPS | AggOut |
+|---|---|---|---|---|---|---|---|---|
+| functionally-3.1 Q4_K_M | small | 0.39s | 1.24s | 2.76s | 12.30s | 101s | 25.4 | 2,566 |
+| functionally-3.1 Q4_K_M | medium | 0.43s | 1.31s | 1.88s | 11.01s | 137s | 23.3 | 3,193 |
+| functionally-3.1 Q5_K_M | small | 0.41s | 1.34s | 1.98s | 18.13s | 108s | 24.1 | 2,599 |
+| functionally-3.1 Q5_K_M | medium | 0.45s | 1.34s | 1.72s | 11.39s | 140s | 21.8 | 3,045 |
+| qwen2.5-7b Q4_K_M | small | 0.49s | 1.77s | 2.42s | 16.39s | 142s | 19.1 | 2,718 |
+| qwen2.5-7b Q4_K_M | medium | 0.62s | 2.46s | 2.64s | 31.03s | 257s | 14.9 | 3,823 |
+| qwen2.5-7b Q5_K_M | small | 0.53s | 1.93s | 2.74s | 17.38s | 155s | 17.7 | 2,744 |
+| qwen2.5-7b Q5_K_M | medium | 0.67s | 2.60s | 2.96s | 31.91s | 271s | 13.9 | 3,778 |
+| **qwen3-8b Q4_K_M** | **small** | **0.60s** | **1.70s** | **1.80s** | 20.94s | **136s** | **21.1** | **2,868** |
+| **qwen3-8b Q4_K_M** | **medium** | **0.71s** | **2.05s** | **2.16s** | 39.16s | **215s** | **17.4** | **3,740** |
+| meta-llama3.1-8B Q4_K_M | medium | 0.38s | 1.52s | 1.84s | 11.84s | 159s | 24.5 | 3,897 |
+| **meta-llama3.1-8B Q4_K_M** | **small** | **0.26s** | **16.70s** | **2.90s** | **620.78s** | **1,336s** | **2.3** | **3,016** |
+
+**Qwen3-8B with `/no_think`:** Mean latency dropped from 9.56s (Run C) → 1.70s (Run D) on small — a 5.6× improvement. Aggregate output tokens dropped from 22,631 → 2,868 (8× reduction), confirming thinking tokens were fully suppressed. Qwen3-8B now has the best accuracy AND competitive latency.
+
+**Cold-prefill outliers persist (Run D):** All models still spike on their first sample per tier. Every model hits 10–39s on `medium-HassGetState-binary_sensor-front_door-001` and 5–21s on `small-HassGetState-binary_sensor-motion-001`. These are KV-cache cold-start artifacts; strip first sample per tier before computing representative latency.
+
+**Functionary "what can you do" spike:** functionally-3.1 models generate 304–503 output tokens answering this capability query (prose list), causing 11–18s outliers — 8–13× the model's mean. Other models either refuse (F7) or respond briefly.
+
+**CRITICAL — meta-llama3.1-8B small server hangs:** Two samples caused catastrophic stalls:
+
+| Sample | Latency | Output tok | Input |
+|---|---|---|---|
+| `small-HassGetState-binary_sensor-occupancy-001` ("is anyone in the office") | **620.78s** | 57 | |
+| `small-HassTurnOff-light-kitchen-area-001` ("turn off the kitchen lights") | **605.97s** | 28 | |
+
+Output token counts are small (28–57), ruling out decode runaways. These appear to be server-level hangs — likely stale KV state or context fragmentation between samples. The run's p95=2.90s confirms 95%+ of samples completed normally; these two were isolated catastrophic failures that skewed mean to 16.70s and wall time to 1,336s.
+
+**Mitigation required:** Set `attempt_timeout` in the benchmark config before re-running meta-llama3.1-8B. Without a per-sample timeout, two stuck samples consumed over 20 minutes and blocked the entire run queue.
+
+**Best accuracy/latency tradeoff (Run D):** qwen3-8b Q4_K_M — 81.2%/71.2% (small/medium), 1.70s/2.05s mean. Qwen2.5-7b Q5_K_M is the closest competitor at 73.8%/68.3% with slightly lower latency (1.93s/2.60s on small/medium).
+
+---
+
+## F10 — Prompt format incompatibility / model does not use tool calling
+
+### Description
+
+The model systematically fails to use tool calling, either:
+1. **Never calling tools:** responds in plain text for all utterances regardless of context, OR
+2. **Random tool selection:** calls completely unrelated tools that bear no semantic relationship
+   to the request (e.g. `HassLawnMowerStartMowing` for a fan speed query, `HassMediaPlayerMute`
+   for a binary sensor read).
+
+Both sub-patterns suggest the model was not fine-tuned for the tool-calling format sent by
+this benchmark, or the system prompt structure is incompatible with the model's expectations.
+This is a **model-level systematic failure**, distinct from F7 (which is per-sample wrong
+response type choice by an otherwise functional model).
+
+### Observed in
+
+| Model | Pattern | Observed behaviour |
+|---|---|---|
+| `phi4-mini-instruct` Q8_0 | Never calls tools | 73/80 samples on small tier produced no tool call; all 18 correct samples expected no tool call; called a tool in 7/80 cases, all mostly wrong |
+| `functionally-small-v2.4` Q4_0 | Random tool selection | tool_name: I in 58/80 (small) and 75/104 (medium); calls unrelated tools like `HassLawnMowerStartMowing` for fan queries, `HassShoppingListAddItem` for occupancy queries |
+
+### Notes
+
+- For phi4-mini: the model likely uses a different system-prompt or tool-spec format. Needs
+  investigation of whether the llama.cpp server is correctly activating its tool-calling mode
+  (check `/v1/models` tool_call support, or try with explicit `tool_choice: required`).
+- For functionally-small-v2.4: the v2.4 and v3.1 models use different function-calling formats.
+  The v2.4 model (`meetkai/functionary-small-v2.4-GGUF`) was released before the OpenAI
+  tool-calling standard was finalized and expects a different prompt structure. Do not compare
+  v2.4 accuracy against v3.1 or other models; treat it as incompatible with the current setup.
+
+### Potential mitigations
+
+- For phi4: investigate prompt format (chat template, tool spec), try `tool_choice: required`
+  in the API call, check llama.cpp chat template detection for this model family.
+- For functionally-2.4: use v3.1 only; v2.4 is functionally superseded and format-incompatible.
 
 ---
 
