@@ -37,6 +37,7 @@ from ha_voice_bench.prompt import DEFAULT_INSTRUCTIONS
 from llama_server import (
     check_server_health,
     check_ssh,
+    get_remote_hw_info,
     get_remote_log_tail,
     get_server_info,
     kill_server,
@@ -376,6 +377,38 @@ def _run_warmup(rc: RunConfig, run_dir: Path, samples: int | None) -> bool:
     return True
 
 
+# ── Hardware info display ─────────────────────────────────────────────────────
+
+
+def _log_hw_info(info: dict) -> None:
+    logger.info("Remote hardware:")
+    if info.get("os"):
+        logger.info("  OS:  %s", info["os"])
+    if info.get("cpu_model"):
+        logger.info("  CPU: %s (%s cores)", info["cpu_model"], info.get("cpu_cores", "?"))
+    if info.get("ram_gib"):
+        logger.info("  RAM: %.1f GiB", info["ram_gib"])
+    for gpu in info.get("gpu_devices", []):
+        name = gpu.get("name", "unknown")
+        backend = gpu.get("backend") or ""
+        vram_total = gpu.get("vram_total_mib")
+        vram_free = gpu.get("vram_free_mib")
+        if vram_total is not None:
+            logger.info(
+                "  GPU: %s [%s] %d MiB total, %d MiB free",
+                name, backend, vram_total, vram_free,
+            )
+        else:
+            logger.info("  GPU: %s [%s]", name, backend)
+    if not info.get("gpu_devices"):
+        raw = (info.get("gpu_raw") or "").strip()
+        logger.info("  GPU: not detected%s", f" (raw: {raw[:120]})" if raw else "")
+    if "nvidia_smi" in info:
+        logger.info("  nvidia-smi: %s", info["nvidia_smi"].replace("\n", "; "))
+    if "rocm_smi" in info:
+        logger.info("  rocm-smi: %s", info["rocm_smi"].replace("\n", "; "))
+
+
 # ── Summary display ───────────────────────────────────────────────────────────
 
 
@@ -603,6 +636,14 @@ def main() -> None:
     except RuntimeError as e:
         sys.exit(str(e))
     logger.info("SSH OK")
+
+    # Collect and log remote hardware info
+    logger.info("")
+    hw_info = get_remote_hw_info(host, ssh_user, llama_cpp_dir)
+    _log_hw_info(hw_info)
+    (run_dir / "hw_info.json").write_text(json.dumps(hw_info, indent=2))
+    logger.debug("Hardware info saved: %s", run_dir / "hw_info.json")
+    logger.info("=" * 60)
 
     # Assemble tiers if requested
     if assemble:

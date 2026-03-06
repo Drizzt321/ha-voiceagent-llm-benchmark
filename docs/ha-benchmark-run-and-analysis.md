@@ -134,6 +134,71 @@ CLI overrides:
 **End-of-run summary** prints operational stats: total wall time, per-model timing, avg
 latency per sample. Accuracy and failure analysis is left to the analysis step (see below).
 
+### Multi-config / averaged comparison run
+
+To compare prompt variants or model sets with statistical confidence, use
+`scripts/run_multi_benchmark.py` to run a list of configs N times each automatically.
+Each repetition calls `run_benchmark.py` internally and produces its own timestamped
+run directory, so logs from all repetitions accumulate under `logs/<config-stem>/` in
+the normal structure.
+
+**Run configs 1–4 three times each:**
+```bash
+uv run scripts/run_multi_benchmark.py \
+  configs/benchmark_test_1.yaml \
+  configs/benchmark_test_2.yaml \
+  configs/benchmark_test_3.yaml \
+  configs/benchmark_test_4.yaml \
+  --runs 3
+```
+
+Shell glob expansion works — the shell expands the pattern before the script sees it:
+```bash
+uv run scripts/run_multi_benchmark.py configs/benchmark_test_*.yaml --runs 3
+```
+If the config directory contains non-YAML files (prompt `.txt` files, `.gitkeep`, etc.),
+use `*.yaml` rather than `*` to avoid passing them as config arguments.
+
+**Preview the execution order without running anything:**
+```bash
+uv run scripts/run_multi_benchmark.py configs/benchmark_test_1.yaml configs/benchmark_test_2.yaml --runs 3 --dry-run
+```
+
+**Pass warmup options through to each sub-run:**
+```bash
+uv run scripts/run_multi_benchmark.py configs/benchmark_test_1.yaml --runs 5 --warmup-samples 5
+uv run scripts/run_multi_benchmark.py configs/benchmark_test_1.yaml --runs 5 --no-warmup
+```
+
+Execution order is sequential: all N repetitions of config 1, then all N of config 2, and
+so on. Each repetition is a fully independent `run_benchmark.py` invocation — server start,
+warmup, eval, and shutdown — so logs are comparable and suitable for averaging.
+
+At the end, the script prints a summary table:
+
+```
+Config                  Run   Status        Wall time
+------------------------------------------------------
+benchmark_test_1          1   completed     42m 15s
+benchmark_test_1          2   completed     41m 58s
+benchmark_test_1          3   completed     43m 02s
+benchmark_test_2          1   completed     44m 11s
+...
+```
+
+If a sub-run exits non-zero, it is marked `FAILED` in the table and the script exits 1
+after all configs complete. Ctrl-C during a sub-run marks the current run as `interrupted`
+and remaining runs as `not-run`, then prints the partial summary before exiting.
+
+**CLI flags:**
+
+| Flag | Description |
+|------|-------------|
+| `--runs N` | Number of times to run each config (default: 1). |
+| `--dry-run` | Pass `--dry-run` to each `run_benchmark.py` invocation; prints plan and exits. |
+| `--no-warmup` | Pass `--no-warmup` to each sub-run. |
+| `--warmup-samples N` | Pass `--warmup-samples N` to each sub-run. |
+
 ---
 
 ### AI-assisted analysis

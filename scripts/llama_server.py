@@ -9,6 +9,7 @@ Assumes SSH key auth is configured for the target host. If not, run:
 """
 
 import logging
+import re
 import subprocess
 import time
 import urllib.error
@@ -223,6 +224,144 @@ def check_server_health(health_url: str) -> tuple[str, dict | None]:
         return "hung", None
     except (OSError, JSONDecodeError):
         return "dead", None
+
+
+def get_remote_hw_info(host: str, ssh_user: str, llama_cpp_dir: str) -> dict:
+    """Collect hardware information from the remote host.
+
+    Three-layer GPU detection:
+      1. llama-server --list-devices (primary — what the inference backend sees)
+      2. nvidia-smi (supplemental, CUDA hosts only)
+      3. rocm-smi  (supplemental, ROCm/HIP hosts only)
+
+    All fields are best-effort; any that fail are absent from the returned dict.
+
+    Returns a dict with keys:
+      os, cpu_model, cpu_cores, ram_gib,
+      gpu_devices (list of {backend, index, name, vram_total_mib, vram_free_mib}),
+      gpu_backend (str, e.g. "CUDA" / "ROCM"),
+      gpu_raw (raw --list-devices stdout),
+      nvidia_smi (str, if applicable),
+      rocm_smi   (str, if applicable).
+    """
+    target = f"{ssh_user}@{host}"
+    info: dict = {}
+
+    # ── OS / CPU / RAM (single SSH call, 4-line output parsed positionally) ────
+    # Avoid nested quoting: each piece outputs one line, parsed by index.
+    # Line 0: OS pretty name (or uname fallback)
+    # Line 1: CPU model name
+    # Line 2: logical core count
+    # Line 3: RAM in KiB
+    sys_cmd = (
+        "grep PRETTY_NAME /etc/os-release 2>/dev/null"
+        " | cut -d= -f2 | tr -d '\"' || uname -srm;"
+        " grep -m1 'model name' /proc/cpuinfo | cut -d: -f2 | sed 's/^ *//';"
+        " nproc;"
+        " grep '^MemTotal:' /proc/meminfo | awk '{print $2}'"
+    )
+    try:
+        r = subprocess.run(["ssh", target, sys_cmd], capture_output=True, text=True, timeout=15)
+        if r.returncode == 0:
+            lines = r.stdout.splitlines()
+            if len(lines) > 0 and lines[0].strip():
+                info["os"] = lines[0].strip()
+            if len(lines) > 1 and lines[1].strip():
+                info["cpu_model"] = lines[1].strip()
+            if len(lines) > 2:
+                try:
+                    info["cpu_cores"] = int(lines[2].strip())
+                except ValueError:
+                    pass
+            if len(lines) > 3:
+                try:
+                    info["ram_gib"] = round(int(lines[3].strip()) / 1_048_576, 1)
+                except ValueError:
+                    pass
+        else:
+            logger.debug("get_remote_hw_info: sys-info SSH error: %s", r.stderr.strip())
+    except Exception as e:  # noqa: BLE001
+        logger.debug("get_remote_hw_info: sys-info failed: %s", e)
+
+    # ── GPU — llama-server --list-devices (primary) ───────────────────────────
+    try:
+        r = subprocess.run(
+            ["ssh", target, f"{llama_cpp_dir}/bin/llama-server --list-devices 2>&1"],
+            capture_output=True, text=True, timeout=30,
+        )
+        raw = r.stdout.strip()
+        info["gpu_raw"] = raw
+
+        gpu_devices: list[dict] = []
+        backend: str | None = None
+
+        for line in raw.splitlines():
+            # "Available devices:" block lines, e.g.:
+            #   CUDA0: NVIDIA GeForce GTX 1080 (8106 MiB, 7996 MiB free)
+            #   ROCm0: AMD Radeon RX 7900 XTX (24560 MiB, 24000 MiB free)
+            m = re.match(
+                r"^\s+([A-Za-z]+?)(\d+):\s+(.+?)\s+\((\d+)\s+MiB,\s*(\d+)\s+MiB\s+free\)",
+                line,
+            )
+            if m:
+                b = m.group(1).upper()
+                if backend is None:
+                    backend = b
+                gpu_devices.append({
+                    "backend": b,
+                    "index": int(m.group(2)),
+                    "name": m.group(3).strip(),
+                    "vram_total_mib": int(m.group(4)),
+                    "vram_free_mib": int(m.group(5)),
+                })
+
+        # Fallback: parse ggml init line if Available devices block was empty
+        # e.g. "ggml_cuda_init: found 1 ROCm devices:"
+        if not gpu_devices:
+            for line in raw.splitlines():
+                m2 = re.match(r"ggml_\w+_init: found \d+ (\w+) devices:", line)
+                if m2:
+                    backend = m2.group(1).upper()
+            for line in raw.splitlines():
+                # "  Device 0: NVIDIA GeForce GTX 1080, compute capability 6.1, VMM: yes"
+                m3 = re.match(r"^\s+Device \d+:\s+(.+)", line)
+                if m3:
+                    gpu_devices.append({"name": m3.group(1).strip(), "backend": backend})
+
+        info["gpu_devices"] = gpu_devices
+        info["gpu_backend"] = backend
+
+    except Exception as e:  # noqa: BLE001
+        logger.debug("get_remote_hw_info: --list-devices failed: %s", e)
+        info.setdefault("gpu_devices", [])
+        info.setdefault("gpu_backend", None)
+
+    # ── Vendor-specific supplemental info ────────────────────────────────────
+    backend = info.get("gpu_backend")
+    if backend == "CUDA":
+        try:
+            r = subprocess.run(
+                ["ssh", target,
+                 "nvidia-smi --query-gpu=name,memory.total,driver_version"
+                 " --format=csv,noheader 2>/dev/null"],
+                capture_output=True, text=True, timeout=15,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                info["nvidia_smi"] = r.stdout.strip()
+        except Exception as e:  # noqa: BLE001
+            logger.debug("get_remote_hw_info: nvidia-smi failed: %s", e)
+    elif backend in ("ROCM", "HIP"):
+        try:
+            r = subprocess.run(
+                ["ssh", target, "rocm-smi --showproductname 2>/dev/null"],
+                capture_output=True, text=True, timeout=15,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                info["rocm_smi"] = r.stdout.strip()
+        except Exception as e:  # noqa: BLE001
+            logger.debug("get_remote_hw_info: rocm-smi failed: %s", e)
+
+    return info
 
 
 def get_remote_log_tail(host: str, ssh_user: str, lines: int = 30) -> str:
