@@ -253,6 +253,8 @@ def _build_eval_command(
         f"max_retries={max_retries}",
         "--model",
         "openai/local",
+        "-M",
+        f"client_timeout={attempt_timeout + 5}",
         "--max-connections",
         "1",
         "--display",
