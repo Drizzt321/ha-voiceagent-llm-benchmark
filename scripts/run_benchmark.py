@@ -17,6 +17,7 @@ See configs/benchmark.example.yaml for full config documentation.
 import argparse
 import json
 import logging
+import os
 import shutil
 import signal
 import subprocess
@@ -362,15 +363,18 @@ def _run_warmup(rc: RunConfig, run_dir: Path, samples: int | None) -> bool:
         cmd += ["--limit", str(samples)]
 
     try:
-        result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, timeout=120)
+        proc = subprocess.Popen(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, start_new_session=True)
+        _, stderr = proc.communicate(timeout=120)
     except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
         logger.error("  Warmup timed out after 120s — server may have crashed")
         return False
 
     elapsed = time.monotonic() - t0
-    if result.returncode != 0:
+    if proc.returncode != 0:
         logger.warning("  Warmup finished with errors (%.0fs)", elapsed)
-        logger.debug("  Warmup stderr: %s", result.stderr.strip()[-1000:])
+        logger.debug("  Warmup stderr: %s", (stderr or "").strip()[-1000:])
         return False
 
     logger.info("  Warmup done (%.0fs)", elapsed)
@@ -796,10 +800,13 @@ def main() -> None:
 
         run_start = time.monotonic()
         try:
-            result = subprocess.run(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, timeout=eval_timeout)
+            proc = subprocess.Popen(cmd, cwd=_REPO_ROOT, stdout=None, stderr=subprocess.PIPE, text=True, start_new_session=True)
+            _, stderr = proc.communicate(timeout=eval_timeout)
         except subprocess.TimeoutExpired:
+            os.killpg(proc.pid, signal.SIGKILL)
+            proc.wait()
             wall_time = time.monotonic() - run_start
-            logger.error("  Eval timed out after %ds — server may have crashed", eval_timeout)
+            logger.error("  Eval timed out after %ds — killed process group", eval_timeout)
             results.append(RunResult(rc=rc, status="failed", error=f"eval timeout after {eval_timeout}s", wall_time=wall_time))
             server_status = _check_server_after_failure(health_url)
             if server_status in ("hung", "dead"):
@@ -812,11 +819,9 @@ def main() -> None:
 
         wall_time = time.monotonic() - run_start
 
-        logger.debug("  inspect eval exit code: %d", result.returncode)
-        if result.stdout:
-            logger.debug("  stdout: %s", result.stdout[-2000:])
-        if result.stderr:
-            logger.debug("  stderr: %s", result.stderr[-2000:])
+        logger.debug("  inspect eval exit code: %d", proc.returncode)
+        if stderr:
+            logger.debug("  stderr: %s", stderr[-2000:])
 
         # Find the .eval file that was just written
         eval_path = _find_existing_eval(str(run_dir), rc)
@@ -824,8 +829,8 @@ def main() -> None:
         if eval_path:
             n_samples, avg_latency = _extract_run_stats(eval_path)
 
-        status = "completed" if result.returncode == 0 else "failed"
-        error = None if result.returncode == 0 else f"inspect eval exit code {result.returncode}"
+        status = "completed" if proc.returncode == 0 else "failed"
+        error = None if proc.returncode == 0 else f"inspect eval exit code {proc.returncode}"
 
         if status == "completed":
             logger.info(
@@ -835,7 +840,7 @@ def main() -> None:
                 f" | {run_dir_rel}/{rc.log_subdir}/{rc.tier}/" if eval_path else "",
             )
         else:
-            logger.error("  FAILED (exit %d): %s", result.returncode, result.stderr.strip()[:200])
+            logger.error("  FAILED (exit %d): %s", proc.returncode, (stderr or "").strip()[:200])
             server_status = _check_server_after_failure(health_url)
             if server_status in ("hung", "dead"):
                 tail = get_remote_log_tail(host, ssh_user)
