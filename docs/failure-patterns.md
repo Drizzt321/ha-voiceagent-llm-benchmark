@@ -25,6 +25,7 @@ The goal is to classify failures so we can:
 | F8 | Wrong domain filter | `args` |
 | F9 | Out-of-scope request mapped to nearest HA tool | `response_type` |
 | F10 | Prompt format incompatibility / model doesn't use tool calling | `response_type`, `tool_name`, `args` (all) |
+| F_think | Extended thinking inflating latency without accuracy gain | latency only (not a scorer dimension) |
 
 ---
 
@@ -56,6 +57,18 @@ runtime in actual HA.
 - Explicitly state in the system prompt: *"Use the friendly name from `names:`, not the entity ID"*
 - Add an example in the prompt showing correct name vs. ID usage
 - Reformat the inventory to de-emphasise entity IDs (e.g. omit the `entity_id:` key line, lead with `names:`)
+
+### Persistent residual: sensor-domain entities (2026-03-05 runs)
+
+Even after prompt fixes explicitly referencing `names:`, all models continue using entity ID
+form for sensor-domain entities: `sensor.kitchen_temperature`, `cover.bedroom_shade`,
+`media_player.living_room_tv`, `binary_sensor.kitchen_smoke`. Lights and locks respond
+well to the name instruction; sensor-domain entities do not.
+
+**Root cause hypothesis (confirmed by inventory inspection):** In the YAML inventory format,
+`entity_id:` appears as the first field before `name:`. Models pattern-match on the first
+identifier they encounter. Fix: reorder YAML fields to put `name:` first, or remove
+`entity_id:` from the context entirely if it is not needed by the tools.
 
 ---
 
@@ -491,19 +504,60 @@ response type choice by an otherwise functional model).
 
 ### Notes
 
-- For phi4-mini: the model likely uses a different system-prompt or tool-spec format. Needs
-  investigation of whether the llama.cpp server is correctly activating its tool-calling mode
-  (check `/v1/models` tool_call support, or try with explicit `tool_choice: required`).
+- For phi4-mini: **investigated and dropped.** Root cause is a 3-layer serving incompatibility
+  with llama.cpp:
+  1. **Input side:** phi4-mini's native chat template expects tools embedded in system message
+     as `<|tool|>[...json...]<|/tool|>` tokens. llama.cpp passes tools as a top-level Jinja
+     variable — the template condition never fires, tools are never rendered, model outputs
+     `[]` because it doesn't know what tools exist.
+  2. **Output side:** when phi4-mini does make tool calls, it outputs `<|tool_calls|>[...]<|/tool_calls|>`
+     tokens in the content field. llama.cpp has no parser for these tokens — tool calls stay
+     as raw text in `content`, `tool_calls` array remains empty, scorer sees no tool call.
+  3. **EOS token bug:** Microsoft's original tokenizer sets `eos_token: "<|endoftext|>"` but
+     model uses `<|end|>` (token 200020). Unsloth GGUF corrects this — already resolved in
+     the GGUF used.
+  No community drop-in fix for llama.cpp exists (confirmed via vllm issue #14682 which shows
+  the same problem in vllm). Ollama supports phi4-mini tool calling via an internal
+  model-specific handler, not transferable to llama.cpp without significant custom engineering.
+  **Phi4-mini dropped from benchmark.**
 - For functionally-small-v2.4: the v2.4 and v3.1 models use different function-calling formats.
-  The v2.4 model (`meetkai/functionary-small-v2.4-GGUF`) was released before the OpenAI
+  The v2.4 model (`meetkai/functionally-small-v2.4-GGUF`) was released before the OpenAI
   tool-calling standard was finalized and expects a different prompt structure. Do not compare
   v2.4 accuracy against v3.1 or other models; treat it as incompatible with the current setup.
 
 ### Potential mitigations
 
-- For phi4: investigate prompt format (chat template, tool spec), try `tool_choice: required`
-  in the API call, check llama.cpp chat template detection for this model family.
+- For phi4: if revisiting, Ollama is the cleaner path (has phi4-mini tool calling working
+  internally). llama.cpp path requires: custom Jinja template (input side) + harness-level
+  `<|tool_calls|>` response parser (output side). Non-trivial; no reference implementation.
 - For functionally-2.4: use v3.1 only; v2.4 is functionally superseded and format-incompatible.
+
+---
+
+## F_think — Extended thinking inflating latency without accuracy gain
+
+### Description
+
+Model uses chain-of-thought reasoning mode (thinking tokens) which inflates latency 6–9×
+without accuracy improvement for tool-calling tasks. Not a scorer failure — accuracy is
+unaffected — but a practical disqualifier for voice pipeline use.
+
+### Observed in
+
+| Model | Thinking tokens (mean) | Normal output tokens | Latency impact |
+|---|---|---|---|
+| Qwen3-8B Q4_K_M (Run C, baseline) | 700–1,800 per sample | ~30–100 | 9.56s mean vs 1.40s for qwen2.5-7b-q5 |
+
+Aggregate output tokens: 22,631 (small) and 30,930 (medium) vs ~2,600–4,800 for other models.
+Wall time 765s (small) / 1,250s (medium) vs 112s / 230s for qwen2.5-7b-q5.
+
+### Mitigation
+
+Add `/no_think` to the system prompt. Confirmed effective in Run D: latency dropped from
+9.56s → 1.70s mean (small), aggregate output tokens 22,631 → 2,868. Accuracy improved
+(thinking suppression removed overhead without hurting intent resolution). `/no_think` is
+a Qwen3-specific token — other models ignore it safely, making it safe to include in a
+shared system prompt.
 
 ---
 
@@ -595,3 +649,12 @@ giving up on tool calling when the entity list is very long and it can't identif
 For the "called when shouldn't" cases in the small run, the pattern is that the model is
 too eager to act on ambient complaints ("too hot", "getting dark") and incomplete/nonsense
 utterances. Prompt guidance on when to refuse may help.
+
+**Scorer design question — HassRespond for conversational utterances:** Several models
+respond to conversational inputs ("hello", "what can you do", "who are you") with
+`HassRespond({"response": "..."})` rather than returning `[]`. The test expects `[]`
+but `HassRespond` as a conversational wrapper is arguably correct HA behaviour — the
+assistant responds rather than silently doing nothing. Whether this counts as F7 depends
+on the desired voice pipeline behaviour. Consider adding `HassRespond` as an accepted
+alternate answer for purely conversational test cases, or add scorer config to distinguish
+conversational-refuse from action-refuse expectations.

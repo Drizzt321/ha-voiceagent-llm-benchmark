@@ -796,7 +796,7 @@ def main() -> None:
         logger.debug("  CMD: %s", " ".join(cmd))
 
         n_samples_est = _count_samples(base_dir, rc.tier)
-        eval_timeout = max(300, (n_samples_est or 10) * 60)  # at least 5 min, 60s/sample budget
+        eval_timeout = max(300, (n_samples_est or 10) * 120)  # at least 5 min, 120s/sample budget
 
         run_start = time.monotonic()
         try:
