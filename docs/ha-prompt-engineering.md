@@ -117,6 +117,40 @@ Priority order once F1/F5 are addressed:
 4. **F4 — domain vs device_class:** Models use `device_class` filter instead of `domain`.
    Candidate: clarify in tool descriptions or add instruction
    "Use `domain` (not `device_class`) to filter by entity type."
+   **2026-04-04 result: TESTED AND REJECTED.** Caused regression (-3.0pp Qwen3 small).
+   Device_class misuse unchanged. Do not revisit as system prompt instruction — address
+   in tool descriptions or inventory format instead.
+
+### Iteration 4 — F7 refusal line (adopted 2026-04-04)
+
+Added: `"If no provided tool directly fulfills the user's request, respond without calling any tool."`
+
+**Result:** +5.8pp Qwen3 small, +3.5pp medium. Broad collateral improvements (F1, F4, F5 reduced). See `reports/prompt-tweaking-cross-config-comparison-2026-04-04.md`.
+
+### Future F7 refinement variants (not yet tested)
+
+The current F7 line is effective. These are theoretical variations that could be tested
+if further improvement is needed on edge cases, incomplete commands, or unavailable entities:
+
+1. **"Ask first" variant** — encourages clarification over silence:
+   `"If no provided tool directly fulfills the user's request, ask for clarification or respond without calling any tool."`
+   Target: ambiguous cases where the model currently acts instead of asking.
+   Risk: could cause over-asking on clear but casual commands.
+
+2. **"Unclear intent" trigger** — scopes refusal to ambiguity as well as tool mismatch:
+   `"If the user's intent is unclear or no provided tool directly fulfills the request, respond without calling any tool."`
+   Target: incomplete commands ("turn off the lights in the"), ambiguous phrasing.
+   Risk: "unclear" is subjective — may suppress valid casual utterances. **Highest-signal next test.**
+
+3. **"Unavailable entity" variant** — explicitly addresses unavailable device failures:
+   `"If no provided tool directly fulfills the user's request, or the target device is unavailable, respond without calling any tool."`
+   Target: persistent unavailable-entity F7 failures (smart bulb E7A2).
+   Risk: model may not connect "unavailable" to `state: unavailable` in the inventory YAML format.
+
+4. **Positive framing** — flips from prohibition to confidence threshold:
+   `"Only call intent tools when you are confident the correct tool and entity are available to fulfill the request."`
+   Target: covers both ambiguous intents and unavailable entities elegantly.
+   Risk: "confident" is a fuzzy threshold — could suppress borderline-correct calls that currently pass.
 
 ---
 
@@ -272,3 +306,15 @@ Prefer HassGetState for sensor and binary_sensor state queries, and for checking
 | 2026-03-05 | Iteration 3 R2 (getstate+no_think) | Qwen3-8B Q4_K_M | medium | 104 | 71.2% | +3.9pp vs R1 | |
 | 2026-03-05 | Iteration 3 R2 (getstate+no_think) | Qwen2.5-7B Q5_K_M | small | 80 | 73.8% | −2.4pp vs R1 | Within variance; on/off 89% (still leads qwen3 by ~6pp) |
 | 2026-03-05 | Iteration 3 R2 (getstate+no_think) | Qwen2.5-7B Q5_K_M | medium | 104 | 66.3% | −2.9pp vs R1 | multi_call dropped 80%→60%; ambiguous_edge collapsed 50%→0% |
+| 2026-04-04 | F7 refusal (3-run avg) | Qwen3-8B Q4_K_M | small | 80 | 84.6% ± 0.7% | +5.8pp vs Iter3 | **Best result for Qwen3 small**; refusal line reduces F7 called-when-shouldn't |
+| 2026-04-04 | F7 refusal (3-run avg) | Qwen3-8B Q4_K_M | medium | 104 | 74.7% ± 0.6% | +3.5pp vs Iter3 | Stable improvement; collateral F1/F4/F5 reduction |
+| 2026-04-04 | F7 refusal (3-run avg) | Qwen2.5-7B Q5_K_M | small | 80 | 77.1% ± 2.6% | +0.9pp vs Iter3 | Within variance |
+| 2026-04-04 | F7 refusal (3-run avg) | Qwen2.5-7B Q5_K_M | medium | 104 | 72.8% ± 2.4% | +3.6pp vs Iter3 | Borderline improvement |
+| 2026-04-04 | F4 domain (3-run avg) | Qwen3-8B Q4_K_M | small | 80 | 75.8% ± 0.7% | −3.0pp vs Iter3 | **Regression**; device_class misuse unchanged; F5 inflated |
+| 2026-04-04 | F4 domain (3-run avg) | Qwen3-8B Q4_K_M | medium | 104 | 69.2% ± 0.0% | −2.0pp vs Iter3 | Regression; domain instruction confuses arg construction |
+| 2026-04-04 | F4 domain (3-run avg) | Qwen2.5-7B Q5_K_M | small | 80 | 74.6% ± 1.9% | −1.6pp vs Iter3 | Within variance; Qwen2.5 already uses domain correctly |
+| 2026-04-04 | F4 domain (3-run avg) | Qwen2.5-7B Q5_K_M | medium | 104 | 68.3% ± 1.9% | −0.9pp vs Iter3 | Within variance |
+| 2026-04-04 | F7+F4 combined (3-run avg) | Qwen3-8B Q4_K_M | small | 80 | 79.6% ± 1.4% | +0.8pp vs Iter3 | F7 gain offset by F4 regression; net neutral |
+| 2026-04-04 | F7+F4 combined (3-run avg) | Qwen3-8B Q4_K_M | medium | 104 | 74.0% ± 2.5% | +2.8pp vs Iter3 | Within variance |
+| 2026-04-04 | F7+F4 combined (3-run avg) | Qwen2.5-7B Q5_K_M | small | 80 | 78.3% ± 1.9% | +2.1pp vs Iter3 | Within variance |
+| 2026-04-04 | F7+F4 combined (3-run avg) | Qwen2.5-7B Q5_K_M | medium | 104 | 69.6% ± 2.8% | +0.4pp vs Iter3 | Within variance |

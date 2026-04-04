@@ -1,0 +1,34 @@
+# F4 prompt tweak — domain vs device_class clarification
+# Run with: uv run scripts/run_benchmark.py configs/prompt_tweaking_f4.yaml
+
+assemble_tiers: true
+base_dir: test_data
+log_dir: logs/benchmark
+warmup_samples: 5
+
+instructions_file: "configs/prompt_tweaking_f4_domain.txt"
+
+server:
+  host: darkllama
+  ssh_user: drizzt
+  llama_cpp_dir: ~/projects/llama.cpp/build
+  port: 8080
+  startup_timeout: 300
+
+tiers:
+  - small
+  - medium
+
+hardware_modes:
+  - label: gpu
+    ngl: 99
+
+models:
+  - hf_repo: "unsloth/Qwen3-8B-GGUF"
+    name: "qwen3-8b-q4"
+    quant: "Q4_K_M"
+    ctx_sizes: [22000]
+  - hf_repo: "bartowski/Qwen2.5-7B-Instruct-GGUF"
+    name: "qwen2.5-7b-q5"
+    quant: "Q5_K_M"
+    ctx_sizes: [32768]
