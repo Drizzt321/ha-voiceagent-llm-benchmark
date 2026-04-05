@@ -161,14 +161,32 @@ def main() -> None:
 
             cmd = ["uv", "run", "scripts/run_benchmark.py", str(cfg)] + passthrough
             run_start = time.monotonic()
+            proc = None
             try:
-                proc = subprocess.run(cmd, cwd=_REPO_ROOT)
+                proc = subprocess.Popen(cmd, cwd=_REPO_ROOT, start_new_session=True)
+                proc.wait()
                 wall = time.monotonic() - run_start
                 status = "completed" if proc.returncode == 0 else "failed"
                 if proc.returncode != 0:
                     print(f"  run_benchmark.py exited with code {proc.returncode}")
             except KeyboardInterrupt:
                 wall = time.monotonic() - run_start
+                if proc is not None:
+                    import os
+                    import signal
+
+                    try:
+                        pgid = os.getpgid(proc.pid)
+                        print(f"\n  Ctrl-C: killing process group {pgid}...")
+                        os.killpg(pgid, signal.SIGTERM)
+                        proc.wait(timeout=10)
+                    except ProcessLookupError:
+                        pass
+                    except subprocess.TimeoutExpired:
+                        try:
+                            os.killpg(pgid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
                 results.append((cfg, run_num, "interrupted", wall))
                 # Collect remaining as not-run
                 remaining = [
