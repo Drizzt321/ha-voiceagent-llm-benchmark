@@ -1,0 +1,41 @@
+# Qwen3.5 — thinking mode enabled (default), elevated timeouts
+# Run with: uv run scripts/run_benchmark.py configs/qwen3.5_thinking.yaml
+
+assemble_tiers: true
+base_dir: test_data
+log_dir: logs/benchmark
+warmup_samples: 5
+
+instructions_file: "configs/qwen3.5_f7_refusal.txt"
+
+timeout: 120
+attempt_timeout: 60
+
+server:
+  host: darkllama
+  ssh_user: drizzt
+  llama_cpp_dir: ~/projects/llama.cpp/build
+  port: 8080
+  startup_timeout: 300
+
+tiers:
+  - small
+  - medium
+
+hardware_modes:
+  - label: gpu
+    ngl: 99
+
+models:
+  - hf_repo: "bartowski/Qwen_Qwen3.5-9B-GGUF"
+    name: "qwen3.5-9b-think"
+    quant: "Q3_K_M"
+    ctx_sizes: [22000]
+  - hf_repo: "bartowski/Qwen_Qwen3.5-4B-GGUF"
+    name: "qwen3.5-4b-q5-think"
+    quant: "Q5_K_M"
+    ctx_sizes: [22000]
+  - hf_repo: "bartowski/Qwen_Qwen3.5-4B-GGUF"
+    name: "qwen3.5-4b-q8-think"
+    quant: "Q8_0"
+    ctx_sizes: [22000]

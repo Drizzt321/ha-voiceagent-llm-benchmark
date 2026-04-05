@@ -318,3 +318,15 @@ Prefer HassGetState for sensor and binary_sensor state queries, and for checking
 | 2026-04-04 | F7+F4 combined (3-run avg) | Qwen3-8B Q4_K_M | medium | 104 | 74.0% ± 2.5% | +2.8pp vs Iter3 | Within variance |
 | 2026-04-04 | F7+F4 combined (3-run avg) | Qwen2.5-7B Q5_K_M | small | 80 | 78.3% ± 1.9% | +2.1pp vs Iter3 | Within variance |
 | 2026-04-04 | F7+F4 combined (3-run avg) | Qwen2.5-7B Q5_K_M | medium | 104 | 69.6% ± 2.8% | +0.4pp vs Iter3 | Within variance |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-9B Q3_K_M | small | 80 | 65.4% ± 1.9% | — | Thinking off; Q3 quant hurts; well below Qwen3-8B |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-9B Q3_K_M | medium | 104 | 68.9% ± 2.2% | — | Best nothink 9B result |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-9B Q3_K_M | small | 80 | 69.6% ± 3.6% | — | Thinking helps +4pp but 8s latency; Q3 quant limits ceiling |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-9B Q3_K_M | medium | 104 | 64.4% ± 3.5% | — | Thinking hurts on medium (-4.5pp); high variance |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-4B Q5_K_M | small | 80 | 71.2% ± 3.8% | — | Thinking off; decent but not competitive |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-4B Q5_K_M | medium | 104 | 66.3% ± 1.0% | — | |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-4B Q5_K_M | small | 80 | 83.3% ± 0.7% | — | **Best 4B result**; 97% state_query; thinking essential |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-4B Q5_K_M | medium | 104 | 77.9% ± 1.0% | — | Competitive with Qwen3-8B Iter4 (74.7%); 5.5s latency |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-4B Q8_0 | small | 80 | 69.2% ± 2.6% | — | Q8 underperforms Q5 — imatrix regularization effect |
+| 2026-04-04 | Iter4 (F7 refusal, no /no_think) | Qwen3.5-4B Q8_0 | medium | 104 | 65.1% ± 1.5% | — | |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-4B Q8_0 | small | 80 | 78.8% ± 1.2% | — | Thinking helps +10pp but still behind Q5 |
+| 2026-04-04 | Iter4 (F7 refusal, thinking on) | Qwen3.5-4B Q8_0 | medium | 104 | 75.0% ± 3.8% | — | High variance (±3.8); thinking helps +10pp |
