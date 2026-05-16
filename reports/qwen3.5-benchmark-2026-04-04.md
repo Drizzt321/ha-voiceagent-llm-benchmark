@@ -218,9 +218,8 @@ The thinking penalty is consistently ~3× across all Qwen3.5 models — much mor
 
 ### For further testing:
 
-1. **Qwen3.5-4B Q5_K_M with thinking deserves a 5-run validation** to tighten confidence intervals around the 80.4% result.
-2. **Test at larger tiers** (large/enormous) to see if the 4B model scales or hits a context ceiling.
-3. **Consider Qwen3.5-4B Q4_K_M** (2.87 GB) — even more VRAM headroom; if the imatrix regularization pattern holds, Q4 might still be competitive.
+1. **Test at larger tiers** (large/enormous) if future hardware allows lower-latency thinking — currently the 3× latency penalty makes Qwen3.5-4B impractical for voice production.
+2. **Consider Qwen3.5-4B Q4_K_M** (2.87 GB) only if higher-compute hardware becomes available — the latency problem is fundamental to thinking mode, not VRAM.
 
 ### Model disposition:
 
